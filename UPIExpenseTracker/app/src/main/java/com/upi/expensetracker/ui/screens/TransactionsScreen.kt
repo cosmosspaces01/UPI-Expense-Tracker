@@ -10,15 +10,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.widget.Toast
 import com.upi.expensetracker.data.TransactionEntity
 import com.upi.expensetracker.ui.MainViewModel
 import com.upi.expensetracker.ui.theme.*
@@ -36,6 +39,8 @@ fun TransactionsScreen(
 ) {
     val allTransactions by viewModel.allTransactions.collectAsState()
     val categories by viewModel.allCategories.collectAsState()
+    val context = LocalContext.current
+    var isSyncing by remember { mutableStateOf(false) }
 
     // Date Format Helpers
     val dbDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -220,6 +225,63 @@ fun TransactionsScreen(
             }
         }
 
+        // Sync button for the selected date
+        Button(
+            onClick = {
+                if (!isSyncing) {
+                    isSyncing = true
+                    val cal = Calendar.getInstance()
+                    try {
+                        val parsed = dbDateFormat.parse(selectedDate)
+                        if (parsed != null) cal.time = parsed
+                    } catch (e: Exception) { /* use today */ }
+                    cal.set(Calendar.HOUR_OF_DAY, 12)
+                    viewModel.syncTransactionsForDate(cal.timeInMillis) { count ->
+                        isSyncing = false
+                        Toast.makeText(
+                            context,
+                            if (count > 0) "✅ Synced $count transactions" else "No new transactions found",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            enabled = !isSyncing && !useDateRange,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PrimaryPurple,
+                disabledContainerColor = Color(0xFF2C2C2C)
+            ),
+            shape = RoundedCornerShape(12.dp),
+            contentPadding = PaddingValues(vertical = 8.dp)
+        ) {
+            if (isSyncing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = TextPrimary,
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Syncing...", fontSize = 13.sp, color = TextPrimary)
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Sync",
+                    tint = TextPrimary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Sync SMS for $selectedDate",
+                    fontSize = 13.sp,
+                    color = TextPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+
         // Search & Filter Toolbar
         Column(
             modifier = Modifier
@@ -254,34 +316,40 @@ fun TransactionsScreen(
                 OutlinedTextField(
                     value = minAmountText,
                     onValueChange = { minAmountText = it.filter { c -> c.isDigit() || c == '.' } },
-                    placeholder = { Text("Min ₹", color = TextSecondary, fontSize = 12.sp) },
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    label = { Text("Min ₹", fontSize = 12.sp) },
+                    modifier = Modifier.weight(1f).height(52.dp),
                     singleLine = true,
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextPrimary),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = CardBackground,
                         unfocusedContainerColor = CardBackground,
                         focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color(0xFF3A3A3A),
+                        focusedLabelColor = PrimaryPurple,
+                        unfocusedLabelColor = Color(0xFFAAAAAA),
                         focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
+                        unfocusedTextColor = TextPrimary,
+                        cursorColor = PrimaryPurple
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
                 OutlinedTextField(
                     value = maxAmountText,
                     onValueChange = { maxAmountText = it.filter { c -> c.isDigit() || c == '.' } },
-                    placeholder = { Text("Max ₹", color = TextSecondary, fontSize = 12.sp) },
-                    modifier = Modifier.weight(1f).height(44.dp),
+                    label = { Text("Max ₹", fontSize = 12.sp) },
+                    modifier = Modifier.weight(1f).height(52.dp),
                     singleLine = true,
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextPrimary),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = CardBackground,
                         unfocusedContainerColor = CardBackground,
                         focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color(0xFF3A3A3A),
+                        focusedLabelColor = PrimaryPurple,
+                        unfocusedLabelColor = Color(0xFFAAAAAA),
                         focusedTextColor = TextPrimary,
-                        unfocusedTextColor = TextPrimary
+                        unfocusedTextColor = TextPrimary,
+                        cursorColor = PrimaryPurple
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )

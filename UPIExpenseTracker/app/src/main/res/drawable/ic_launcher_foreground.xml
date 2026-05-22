@@ -5,29 +5,24 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Background circle with brand purple -->
+    <!-- Horizontal darker blue stripe (the ribbon band) -->
+    <!-- Original SVG: rect x=1.04 y=11.96 w=30 h=8.08 in 32x32 viewport -->
+    <!-- Mapped to 108x108: y=40.4, h=27.3 (full width) -->
     <path
-        android:fillColor="#6C63FF"
-        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
+        android:fillColor="#4391B2"
+        android:pathData="M0,40h108v28H0z" />
 
-    <!-- Rupee symbol ₹ - top bar -->
+    <!-- Vertical lighter blue stripe (the ribbon band) -->
+    <!-- Original SVG: rect x=12 y=1 w=8.08 h=30 in 32x32 viewport -->
+    <!-- Mapped to 108x108: x=40.5, w=27.3 (full height) -->
+    <path
+        android:fillColor="#96CEE5"
+        android:pathData="M40,0h28v108H40z" />
+
+    <!-- Center knot/overlap (intersection highlight) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,34 L68,34 L68,38 L38,38 Z" />
-
-    <!-- Rupee symbol ₹ - second bar -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M38,42 L68,42 L68,46 L38,46 Z" />
-
-    <!-- Rupee symbol ₹ - vertical stroke -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M40,34 L44,34 L44,50 L40,50 Z" />
-
-    <!-- Rupee symbol ₹ - diagonal stroke -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M48,46 L52,46 L66,70 L62,70 Z" />
+        android:fillAlpha="0.15"
+        android:pathData="M40,40h28v28H40z" />
 
 </vector>
