@@ -2,6 +2,7 @@ package com.upi.expensetracker.utils
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.upi.expensetracker.data.TransactionEntity
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -11,147 +12,269 @@ import java.security.MessageDigest
 
 object SmsParser {
 
+    private const val TAG = "SmsParser"
+
+    // Comprehensive list of Indian bank sender IDs
     private val BANK_SENDER_IDS = setOf(
-        "HDFCBK", "ICICIB", "SBIINB", "AXISBK", "KOTAKB", "PNBSMS", "CANARA", "BOISMS", "UNIONB", "IDFCFB",
-        "HDFCPL", "ICICIP", "SBICRD", "AXISPAY", "KOTAKP"
+        "HDFCBK", "ICICIB", "SBIINB", "AXISBK", "KOTAKB", "PNBSMS", "CANBNK",
+        "BOISMS", "UNIONB", "IDFCFB", "HDFCPL", "ICICIP", "SBICRD", "AXISPAY",
+        "KOTAKP", "BARODIN", "YESBNK", "FEDERL", "INDBNK", "CENTBK", "PAYTMB",
+        "JKBANK", "RBLBNK", "DENABNK", "SYNDBK", "CORPBK", "ANDBNK", "BNKIOB",
+        "MAHABK", "SCBANK", "CITIAN", "DBIBNK", "HSBCIN", "AUFIN", "KVBANK",
+        "IOBILN", "IDBIBN", "TMBLNK", "EQUITAS", "INDUSB", "DCBBK", "BANDHAN",
+        "PAYTM", "PHONPE", "GPAY", "BHIM",
+        // Union Bank of India specific sender IDs
+        "UBOINB", "UBIBNK", "UNIBNK",
+        // HDFC specific
+        "HDFCBN", "HDFC"
     )
 
-    private val DEBIT_KEYWORDS = listOf("debited", "debit", "paid", "sent", "transferred", "spent")
+    // Keywords that indicate a debit/spend transaction
+    private val DEBIT_KEYWORDS = listOf(
+        "debited", "debit", "paid", "sent", "transferred", "spent",
+        "withdrawn", "purchase", "charged", "payment", "txn"
+    )
 
-    // Dynamic categorizer map
+    // Keywords that indicate credit — used to EXCLUDE credit SMS
+    private val CREDIT_KEYWORDS = listOf(
+        "credited", "credit", "received", "refund", "cashback", "reversed"
+    )
+
+    // Merchant to category mapping
     private val MERCHANT_CATEGORY_MAP = mapOf(
         "swiggy" to "Food & Dining",
         "zomato" to "Food & Dining",
         "starbucks" to "Food & Dining",
         "eatclub" to "Food & Dining",
         "domino" to "Food & Dining",
+        "mcdonald" to "Food & Dining",
+        "kfc" to "Food & Dining",
+        "pizza" to "Food & Dining",
+        "burger" to "Food & Dining",
         "uber" to "Transport",
         "ola" to "Transport",
         "rapido" to "Transport",
         "irctc" to "Transport",
         "metro" to "Transport",
+        "redbus" to "Transport",
+        "makemytrip" to "Transport",
         "amazon" to "Shopping",
         "flipkart" to "Shopping",
         "myntra" to "Shopping",
         "dmart" to "Shopping",
         "reliance" to "Shopping",
+        "bigbasket" to "Shopping",
+        "blinkit" to "Shopping",
+        "zepto" to "Shopping",
+        "meesho" to "Shopping",
+        "nykaa" to "Shopping",
         "netflix" to "Subscriptions",
         "spotify" to "Subscriptions",
         "prime" to "Subscriptions",
         "youtube" to "Subscriptions",
         "hotstar" to "Subscriptions",
+        "disney" to "Subscriptions",
         "jio" to "Utilities",
         "airtel" to "Utilities",
-        "vi" to "Utilities",
+        "vi " to "Utilities",
         "electricity" to "Utilities",
         "water" to "Utilities",
         "gas" to "Utilities",
+        "broadband" to "Utilities",
+        "bsnl" to "Utilities",
         "medplus" to "Health",
         "pharmacy" to "Health",
         "apollo" to "Health",
         "doctor" to "Health",
+        "hospital" to "Health",
+        "practo" to "Health",
         "mutual" to "Investments",
         "groww" to "Investments",
         "zerodha" to "Investments",
         "sip" to "Investments",
+        "kuvera" to "Investments",
         "rent" to "Rent",
         "cinema" to "Entertainment",
         "theatre" to "Entertainment",
-        "bookmyshow" to "Entertainment"
+        "bookmyshow" to "Entertainment",
+        "pvr" to "Entertainment",
+        "inox" to "Entertainment"
     )
 
     fun parseSMS(body: String, fallbackDateMs: Long = System.currentTimeMillis()): TransactionEntity? {
-        val bodyLower = body.lowercase()
-        
-        // Step 1: Check debit keywords
-        val isDebit = DEBIT_KEYWORDS.any { keyword -> bodyLower.contains(keyword) }
-        if (!isDebit) return null
+        val bodyLower = body.lowercase(Locale.ROOT)
 
-        // Step 2: Extract Amount (₹ or Rs. followed by numbers/commas/dots)
-        val amountRegex = Regex("""(?:rs\.?|₹|inr)\s*([0-9,]+\.?[0-9]*)""", RegexOption.IGNORE_CASE)
-        val amountMatch = amountRegex.find(bodyLower) ?: return null
-        val amountStr = amountMatch.groupValues[1].replace(",", "")
-        val amount = amountStr.toDoubleOrNull() ?: return null
+        // Step 1: Exclude credit SMS (but allow messages that have both credit and debit keywords)
+        val hasCredit = CREDIT_KEYWORDS.any { keyword -> bodyLower.contains(keyword) }
+        val hasDebit = DEBIT_KEYWORDS.any { keyword -> bodyLower.contains(keyword) }
 
-        // Step 3: Extract Merchant Name
-        var merchant = "Unknown Payee"
-        
-        // Typical patterns: "paid to X", "debited ... to X", "sent to X", "spent at X"
-        val merchantRegexes = listOf(
-            Regex("""\b(?:paid to|transferred to|sent to|spent at|debited to|debited at|info:|vpa|to|at)\s+([a-z0-9\s&.\-_]+?)(?:\s+on|\s+from|\s+ref|\s+upi|\s+via|\.|\z)"""),
-            Regex("""(?:debited.*to)\s+([a-z0-9\s&.\-_]+?)(?:\s+on|\s+from|\s+ref|\s+upi|\.|\z)"""),
-            Regex("""ref:\s*([a-z0-9\s&.\-_]+?)\s+upi""")
+        // If it only has credit keywords and no debit keywords, skip it
+        if (hasCredit && !hasDebit) {
+            Log.d(TAG, "Skipping credit SMS: ${body.take(80)}")
+            return null
+        }
+
+        // Step 2: Check debit keywords
+        if (!hasDebit) {
+            Log.d(TAG, "No debit keyword found in: ${body.take(80)}")
+            return null
+        }
+
+        // Step 3: Extract Amount — multiple patterns for Indian bank SMS
+        // Patterns: "Rs. 500.00", "Rs 500", "Rs:500", "Rs.500", "INR 500.00", "₹500", "debited by 500.00"
+        val amountRegexes = listOf(
+            Regex("""(?:rs[.:;]?\s*|₹\s*|inr[.:;]?\s*)([0-9,]+\.?[0-9]*)""", RegexOption.IGNORE_CASE),
+            Regex("""(?:debited\s+(?:by\s+|for\s+|with\s+)?)(?:rs[.:;]?\s*|₹\s*|inr[.:;]?\s*)?([0-9,]+\.[0-9]{2})""", RegexOption.IGNORE_CASE),
+            Regex("""(?:amount\s*(?:of\s+)?)(?:rs[.:;]?\s*|₹\s*|inr[.:;]?\s*)?([0-9,]+\.[0-9]{2})""", RegexOption.IGNORE_CASE),
+            Regex("""([0-9,]+\.[0-9]{2})\s*(?:debited|paid|sent|spent|withdrawn)""", RegexOption.IGNORE_CASE)
         )
 
-        for (regex in merchantRegexes) {
-            val match = regex.find(bodyLower)
+        var amount: Double? = null
+        for (regex in amountRegexes) {
+            val match = regex.find(body) // Use original body for case-sensitive ₹
             if (match != null) {
-                val candidate = match.groupValues[1].trim()
-                if (candidate.isNotEmpty() && !candidate.contains("account") && !candidate.contains("bank") && candidate.length > 1) {
-                    merchant = candidate.split(" ").joinToString(" ") { it.replaceFirstChar { char -> char.uppercase() } }
+                val amountStr = match.groupValues[1].replace(",", "")
+                amount = amountStr.toDoubleOrNull()
+                if (amount != null && amount > 0) {
+                    Log.d(TAG, "Amount found: ₹$amount")
                     break
                 }
             }
         }
 
-        // Fallback: If merchant is still unknown, search for known merchant names in the body
+        if (amount == null || amount <= 0) {
+            Log.d(TAG, "No valid amount found in: ${body.take(80)}")
+            return null
+        }
+
+        // Step 4: Extract Merchant Name — comprehensive patterns for Indian bank SMS
+        var merchant = "Unknown Payee"
+
+        val merchantRegexes = listOf(
+            // "paid to Merchant Name" / "sent to Merchant" / "transferred to Merchant"
+            Regex("""(?:paid|sent|transferred)\s+to\s+([a-zA-Z0-9\s&.\-_@]+?)(?:\s+on|\s+from|\s+ref|\s+upi|\s+via|\s+a/c|\s+ac|\.\s|$)""", RegexOption.IGNORE_CASE),
+            // "debited ... to Merchant"
+            Regex("""debited.*?(?:to|at|for)\s+([a-zA-Z0-9\s&.\-_@]+?)(?:\s+on|\s+from|\s+ref|\s+upi|\s+via|\s+a/c|\.\s|$)""", RegexOption.IGNORE_CASE),
+            // "spent at Merchant"
+            Regex("""spent\s+at\s+([a-zA-Z0-9\s&.\-_@]+?)(?:\s+on|\s+from|\s+ref|\s+upi|\.\s|$)""", RegexOption.IGNORE_CASE),
+            // "VPA xxx@ybl" — extract the part before @
+            Regex("""vpa\s+([a-zA-Z0-9.\-_]+)@""", RegexOption.IGNORE_CASE),
+            // "to VPA xxx@ybl" — UPI ID based extraction
+            Regex("""to\s+([a-zA-Z0-9.\-_]+)@""", RegexOption.IGNORE_CASE),
+            // "Info: Merchant Name"
+            Regex("""info[:\s]+([a-zA-Z0-9\s&.\-_]+?)(?:\s+ref|\s+upi|\.\s|$)""", RegexOption.IGNORE_CASE),
+            // "Fvg: Merchant Name" — Union Bank pattern (Favouring)
+            Regex("""fvg[:\s]+([a-zA-Z0-9\s&.\-_]+?)(?:\s+avl|\s+bal|\s+ref|\.\s|,|$)""", RegexOption.IGNORE_CASE),
+            // Generic "to SomeName" (last resort, looser pattern)
+            Regex("""\bto\s+([A-Z][a-zA-Z0-9\s&.\-_]+?)(?:\s+on|\s+ref|\s+upi|\s+via|\.\s|\s+a/c|$)""")
+        )
+
+        for (regex in merchantRegexes) {
+            val match = regex.find(body)
+            if (match != null) {
+                val candidate = match.groupValues[1].trim()
+                if (candidate.isNotEmpty() &&
+                    !candidate.lowercase().contains("account") &&
+                    !candidate.lowercase().contains("bank") &&
+                    !candidate.lowercase().contains("a/c") &&
+                    candidate.length > 1 && candidate.length < 50) {
+                    merchant = candidate.split(" ").joinToString(" ") { word ->
+                        word.replaceFirstChar { char -> char.uppercase() }
+                    }
+                    Log.d(TAG, "Merchant found: $merchant")
+                    break
+                }
+            }
+        }
+
+        // Fallback: search for known merchant names in the body
         if (merchant == "Unknown Payee") {
             val knownMerchants = MERCHANT_CATEGORY_MAP.keys.sortedByDescending { it.length }
             for (known in knownMerchants) {
                 if (bodyLower.contains(known)) {
                     merchant = known.replaceFirstChar { it.uppercase() }
+                    Log.d(TAG, "Merchant matched from known list: $merchant")
                     break
                 }
             }
         }
 
-        // Step 4: Extract Account ending digits
-        val accountRegex = Regex("""(?:a/c|account|ending|acct)\s*.*?([0-9]{4})""", RegexOption.IGNORE_CASE)
-        val accountMatch = accountRegex.find(bodyLower)
-        val accountLast4 = accountMatch?.groupValues?.get(1) ?: "XXXX"
+        // Step 5: Extract Account ending digits
+        // Patterns: "a/c *5024", "a/c XX1234", "A/C *9692", "account **1234", "ending 1234"
+        val accountRegexes = listOf(
+            Regex("""(?:a/?c|account|acct|ac)\s*(?:no\.?\s*)?(?:ending\s*)?(?:xx|x|\*\*|\*)?\s*(\d{4})""", RegexOption.IGNORE_CASE),
+            Regex("""(?:xx|x|\*\*|\*)(\d{4})""", RegexOption.IGNORE_CASE),
+            Regex("""(?:ending|ends)\s*(?:with\s+)?(\d{4})""", RegexOption.IGNORE_CASE)
+        )
+        var accountLast4 = "XXXX"
+        for (regex in accountRegexes) {
+            val match = regex.find(body)
+            if (match != null) {
+                accountLast4 = match.groupValues[1]
+                break
+            }
+        }
 
-        // Step 5: Extract Reference ID
-        val refRegex = Regex("""(?:ref|upi ref|ref no|rrn)\.?\s*(?:no\.?)?\s*([0-9]{12})""", RegexOption.IGNORE_CASE)
-        val refMatch = refRegex.find(bodyLower)
-        val refId = refMatch?.groupValues?.get(1) ?: "TXN${System.currentTimeMillis()}"
+        // Step 6: Extract Reference ID
+        val refRegexes = listOf(
+            Regex("""(?:ref|upi\s*ref|ref\s*no|rrn|reference)\s*[.:#\s]*\s*(\d{9,14})""", RegexOption.IGNORE_CASE),
+            Regex("""(?:txn|transaction)\s*(?:id|no)?[.:#\s]*\s*([0-9A-Z]{8,14})""", RegexOption.IGNORE_CASE)
+        )
+        var refId = "TXN${System.currentTimeMillis()}"
+        for (regex in refRegexes) {
+            val match = regex.find(body)
+            if (match != null) {
+                refId = match.groupValues[1]
+                break
+            }
+        }
 
-        // Step 6: Extract and Format Date and Time from SMS Body
+        // Step 7: Extract and Format Date and Time from SMS Body
         var formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(fallbackDateMs))
         var formattedTime = SimpleDateFormat("HH:mm", Locale.US).format(Date(fallbackDateMs))
 
-        // Date regex: matches patterns like 21-May-26, 21-05-2026, 21/05/26, 21May26
-        val dateRegex = Regex("""([0-9]{1,2}[-/][0-9]{1,2}[-/][0-9]{2,4}|[0-9]{1,2}\s*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*[0-9]{2,4})""", RegexOption.IGNORE_CASE)
-        val dateMatch = dateRegex.find(bodyLower)
-        if (dateMatch != null) {
-            val dateStr = dateMatch.groupValues[1]
-            try {
-                val formats = listOf(
-                    "dd-MM-yyyy", "dd/MM/yyyy", "dd-MM-yy", "dd/MM/yy",
-                    "dd MMM yyyy", "dd MMM yy", "dd-MMM-yy", "dd-MMM-yyyy",
-                    "ddMMMyy", "ddMMMyyyy"
-                )
-                var parsedDate: Date? = null
-                for (fmt in formats) {
-                    try {
-                        val sdf = SimpleDateFormat(fmt, Locale.US)
-                        sdf.isLenient = false
-                        parsedDate = sdf.parse(dateStr)
-                        if (parsedDate != null) break
-                    } catch (e: Exception) {
-                        // continue trying
+        // Date regex: matches patterns like 21-May-26, 21-05-2026, 21/05/26, 2026-05-21
+        val dateRegexes = listOf(
+            Regex("""(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})"""),
+            Regex("""(\d{1,2}\s*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*\d{2,4})""", RegexOption.IGNORE_CASE),
+            Regex("""(\d{4}[-/]\d{1,2}[-/]\d{1,2})""")
+        )
+
+        for (regex in dateRegexes) {
+            val match = regex.find(body)
+            if (match != null) {
+                val dateStr = match.groupValues[1]
+                try {
+                    val formats = listOf(
+                        "dd-MM-yyyy", "dd/MM/yyyy", "dd-MM-yy", "dd/MM/yy",
+                        "dd MMM yyyy", "dd MMM yy", "dd-MMM-yy", "dd-MMM-yyyy",
+                        "ddMMMyy", "ddMMMyyyy", "yyyy-MM-dd", "yyyy/MM/dd",
+                        "dd MMM", "d MMM yyyy"
+                    )
+                    var parsedDate: Date? = null
+                    for (fmt in formats) {
+                        try {
+                            val sdf = SimpleDateFormat(fmt, Locale.US)
+                            sdf.isLenient = false
+                            parsedDate = sdf.parse(dateStr)
+                            if (parsedDate != null) break
+                        } catch (e: Exception) {
+                            // continue trying
+                        }
                     }
+                    if (parsedDate != null) {
+                        formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(parsedDate)
+                    }
+                } catch (e: Exception) {
+                    // Fallback to SMS timestamp date
                 }
-                if (parsedDate != null) {
-                    formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(parsedDate)
-                }
-            } catch (e: Exception) {
-                // Fallback to default
+                break
             }
         }
 
         // Time regex: matches patterns like 12:30:15 or 14:15
-        val timeRegex = Regex("""([0-9]{1,2}:[0-9]{2}(?::[0-9]{2})?)""")
-        val timeMatch = timeRegex.find(bodyLower)
+        val timeRegex = Regex("""(\d{1,2}:\d{2}(?::\d{2})?)""")
+        val timeMatch = timeRegex.find(body)
         if (timeMatch != null) {
             val timeStr = timeMatch.groupValues[1]
             try {
@@ -165,26 +288,30 @@ object SmsParser {
                     formattedTime = SimpleDateFormat("HH:mm", Locale.US).format(parsedTime)
                 }
             } catch (e: Exception) {
-                // Fallback to default
+                // Fallback to SMS timestamp time
             }
         }
 
-        // Step 7: Deduplication Hash (SHA-256 of refId + amount)
+        // Step 8: Deduplication Hash (SHA-256 of refId + amount)
         val id = generateHash(refId + amount)
 
-        // Step 8: Categorization Suggestion
+        // Step 9: Categorization Suggestion — check both merchant name and raw SMS body
         var category = "Others"
         val merchantLower = merchant.lowercase()
         for ((keyword, cat) in MERCHANT_CATEGORY_MAP) {
-            if (merchantLower.contains(keyword)) {
+            if (merchantLower.contains(keyword) || bodyLower.contains(keyword)) {
                 category = cat
                 break
             }
         }
 
-        // Step 9: Recurring Payment Detection
-        // If merchant matches a known subscription service, flag it
-        val isRecurring = listOf("netflix", "spotify", "prime", "youtube", "hotstar").any { sub -> merchantLower.contains(sub) }
+        // Step 10: Recurring Payment Detection
+        val isRecurring = listOf(
+            "netflix", "spotify", "prime", "youtube", "hotstar", "disney",
+            "jio", "airtel", "broadband", "insurance"
+        ).any { sub -> merchantLower.contains(sub) || bodyLower.contains(sub) }
+
+        Log.d(TAG, "✅ Parsed: ₹$amount | $merchant | $category | $formattedDate $formattedTime | Ref: $refId")
 
         return TransactionEntity(
             id = id,
@@ -222,7 +349,7 @@ object SmsParser {
     fun syncTransactionsForDate(context: Context, dateMs: Long): List<TransactionEntity> {
         val transactions = mutableListOf<TransactionEntity>()
         val contentResolver = context.contentResolver
-        
+
         // Define day boundaries for the given date
         val calendar = Calendar.getInstance()
         calendar.timeInMillis = dateMs
@@ -238,6 +365,8 @@ object SmsParser {
         calendar.set(Calendar.MILLISECOND, 999)
         val endTimeMs = calendar.timeInMillis
 
+        Log.d(TAG, "Syncing SMS from ${Date(startTimeMs)} to ${Date(endTimeMs)}")
+
         val cursor = contentResolver.query(
             Uri.parse("content://sms/inbox"),
             arrayOf("body", "date", "address"),
@@ -245,6 +374,9 @@ object SmsParser {
             arrayOf(startTimeMs.toString(), endTimeMs.toString()),
             "date DESC"
         )
+
+        var totalSmsRead = 0
+        var totalParsed = 0
 
         cursor?.use {
             val bodyIndex = it.getColumnIndexOrThrow("body")
@@ -255,21 +387,30 @@ object SmsParser {
                 val address = it.getString(addressIndex) ?: ""
                 val body = it.getString(bodyIndex) ?: ""
                 val smsDateMs = it.getLong(dateIndex)
+                totalSmsRead++
 
-                // Optional bank sender filter:
-                // Check if address ends with any of the sender IDs
-                val isBankSMS = BANK_SENDER_IDS.any { bankId -> address.uppercase().contains(bankId) }
-                
-                // Parse the SMS if it's either a bank address or matches general keywords
-                if (isBankSMS || address.isNotEmpty()) {
+                // Check if address matches any known bank sender ID
+                val addressUpper = address.uppercase()
+                val isBankSMS = BANK_SENDER_IDS.any { bankId -> addressUpper.contains(bankId) }
+
+                // Also check if the SMS body contains debit keywords (catches non-standard sender IDs)
+                val bodyLower = body.lowercase(Locale.ROOT)
+                val hasDebitKeyword = DEBIT_KEYWORDS.any { keyword -> bodyLower.contains(keyword) }
+
+                if (isBankSMS || hasDebitKeyword) {
+                    Log.d(TAG, "Processing SMS from: $address | Bank: $isBankSMS | Debit: $hasDebitKeyword")
+                    Log.d(TAG, "SMS body: ${body.take(120)}")
+
                     val txn = parseSMS(body, smsDateMs)
                     if (txn != null) {
                         transactions.add(txn)
+                        totalParsed++
                     }
                 }
             }
         }
+
+        Log.d(TAG, "Sync complete: $totalSmsRead SMS read, $totalParsed transactions parsed")
         return transactions
     }
 }
-
