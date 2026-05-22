@@ -1,0 +1,7 @@
+- Always use Kotlin with Jetpack Compose
+- Use Room database for all local storage
+- Use Material 3 design components
+- Target Android 10 (API 29) and above
+- All amounts in Indian Rupees (₹)
+- Never use deprecated APIs
+- Always add comments to complex logic
