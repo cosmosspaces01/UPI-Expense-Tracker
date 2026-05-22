@@ -35,6 +35,7 @@ fun EditTransactionSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
     // Form States
+    var merchantName by remember { mutableStateOf(transaction.merchant) }
     var description by remember { mutableStateOf(transaction.description) }
     var selectedCategory by remember { mutableStateOf(transaction.category) }
     var notes by remember { mutableStateOf(transaction.notes) }
@@ -70,11 +71,25 @@ fun EditTransactionSheet(
                 color = TextSecondary
             )
 
+            // Merchant Name Input (so user can fix "Unknown Payee")
+            OutlinedTextField(
+                value = merchantName,
+                onValueChange = { merchantName = it },
+                label = { Text("Merchant / Payee Name") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryPurple,
+                    unfocusedBorderColor = Color(0xFF2C2C2C),
+                    focusedLabelColor = PrimaryPurple
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+
             // Reason/Description Input
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
-                label = { Text("Description / Reason") },
+                label = { Text("Reason / Description") },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = PrimaryPurple,
@@ -221,6 +236,7 @@ fun EditTransactionSheet(
             Button(
                 onClick = {
                     val updated = transaction.copy(
+                        merchant = merchantName.trim().ifEmpty { transaction.merchant },
                         description = description,
                         category = selectedCategory,
                         notes = notes,

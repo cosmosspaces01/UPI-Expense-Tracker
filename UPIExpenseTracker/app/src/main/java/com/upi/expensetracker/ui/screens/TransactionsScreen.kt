@@ -224,16 +224,16 @@ fun TransactionsScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 20.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // Search Input
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Search by merchant or notes...", color = TextSecondary) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = TextSecondary) },
-                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search by merchant or notes...", color = TextSecondary, fontSize = 13.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = TextSecondary, modifier = Modifier.size(20.dp)) },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = CardBackground,
@@ -254,9 +254,10 @@ fun TransactionsScreen(
                 OutlinedTextField(
                     value = minAmountText,
                     onValueChange = { minAmountText = it.filter { c -> c.isDigit() || c == '.' } },
-                    placeholder = { Text("Min ₹", color = TextSecondary, fontSize = 13.sp) },
-                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Min ₹", color = TextSecondary, fontSize = 12.sp) },
+                    modifier = Modifier.weight(1f).height(44.dp),
                     singleLine = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = CardBackground,
                         unfocusedContainerColor = CardBackground,
@@ -270,9 +271,10 @@ fun TransactionsScreen(
                 OutlinedTextField(
                     value = maxAmountText,
                     onValueChange = { maxAmountText = it.filter { c -> c.isDigit() || c == '.' } },
-                    placeholder = { Text("Max ₹", color = TextSecondary, fontSize = 13.sp) },
-                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("Max ₹", color = TextSecondary, fontSize = 12.sp) },
+                    modifier = Modifier.weight(1f).height(44.dp),
                     singleLine = true,
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 13.sp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = CardBackground,
                         unfocusedContainerColor = CardBackground,
@@ -287,15 +289,14 @@ fun TransactionsScreen(
 
             // Category filters horizontal row
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(vertical = 4.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 item {
                     val isSelected = selectedCategoryFilter == "All"
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedCategoryFilter = "All" },
-                        label = { Text("All Categories") },
+                        label = { Text("All", fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = PrimaryPurple,
                             containerColor = CardBackground,
@@ -310,7 +311,7 @@ fun TransactionsScreen(
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedCategoryFilter = cat.name },
-                        label = { Text(cat.name) },
+                        label = { Text(cat.name, fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = PrimaryPurple,
                             containerColor = CardBackground,
@@ -322,35 +323,42 @@ fun TransactionsScreen(
                 }
             }
 
-            // Sorting bar
+            // Sorting bar — count + sort options side by side
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${filteredTransactions.size} transactions found",
-                    fontSize = 12.sp,
+                    text = "${filteredTransactions.size} found",
+                    fontSize = 11.sp,
                     color = TextSecondary
                 )
-                
+
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    Text(text = "Sort:", fontSize = 12.sp, color = TextSecondary)
-                    listOf("Newest", "Oldest", "Highest", "Lowest").forEach { sortOption ->
+                    listOf("New", "Old", "High", "Low").forEachIndexed { index, label ->
+                        val fullLabels = listOf("Newest", "Oldest", "Highest", "Lowest")
+                        val sortOption = fullLabels[index]
                         val isSelected = sortBy == sortOption
-                        val color = if (isSelected) PrimaryPurple else TextSecondary
-                        Text(
-                            text = sortOption,
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = color,
+                        Box(
                             modifier = Modifier
+                                .background(
+                                    if (isSelected) PrimaryPurple else Color.Transparent,
+                                    RoundedCornerShape(8.dp)
+                                )
                                 .clickable { sortBy = sortOption }
-                                .padding(horizontal = 4.dp)
-                        )
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 11.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) TextPrimary else TextSecondary
+                            )
+                        }
                     }
                 }
             }

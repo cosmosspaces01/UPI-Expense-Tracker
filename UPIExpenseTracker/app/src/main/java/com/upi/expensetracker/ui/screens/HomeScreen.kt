@@ -359,6 +359,7 @@ fun TransactionItemCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 Column {
+                    // Show merchant name as primary title
                     Text(
                         text = transaction.merchant,
                         fontWeight = FontWeight.SemiBold,
@@ -366,9 +367,26 @@ fun TransactionItemCard(
                         color = TextPrimary,
                         maxLines = 1
                     )
+
+                    // Show user's description/reason if they've edited it from the default
+                    val hasCustomDesc = transaction.description.isNotEmpty() &&
+                        !transaction.description.startsWith("UPI Transfer to")
+                    val hasNotes = transaction.notes.isNotEmpty()
+
+                    if (hasCustomDesc || hasNotes) {
+                        Text(
+                            text = if (hasCustomDesc) transaction.description else transaction.notes,
+                            fontSize = 12.sp,
+                            color = Color(0xFFB0B0B0),
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 4.dp)
+                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         // Category pill
                         Box(
@@ -383,9 +401,23 @@ fun TransactionItemCard(
                                 fontWeight = FontWeight.Bold
                             )
                         }
-                        
-                        Spacer(modifier = Modifier.width(8.dp))
-                        
+
+                        // Recurring badge
+                        if (transaction.isRecurring) {
+                            Box(
+                                modifier = Modifier
+                                    .background(Color(0xFF1A3A2A), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "🔁 Recurring",
+                                    fontSize = 9.sp,
+                                    color = SuccessGreen,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
                         Text(
                             text = transaction.time,
                             fontSize = 11.sp,
