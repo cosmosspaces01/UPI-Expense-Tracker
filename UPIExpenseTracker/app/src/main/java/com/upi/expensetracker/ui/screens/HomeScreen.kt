@@ -31,6 +31,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
@@ -335,7 +336,7 @@ fun TransactionItemCard(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
-                horizontalAlignment = Alignment.Start,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
