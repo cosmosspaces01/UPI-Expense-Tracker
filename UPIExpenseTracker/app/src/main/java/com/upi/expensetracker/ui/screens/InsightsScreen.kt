@@ -99,6 +99,50 @@ fun InsightsScreen(
             }
         }
 
+        // Insight D: Week-over-week comparison per category
+        // Compare this week (Mon-Sun) vs last week for each category
+        try {
+            val thisWeekCal = Calendar.getInstance()
+            // Set to start of this week (Monday)
+            thisWeekCal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+            val thisWeekStart = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(thisWeekCal.time)
+
+            val lastWeekCal = Calendar.getInstance()
+            lastWeekCal.add(Calendar.WEEK_OF_YEAR, -1)
+            lastWeekCal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+            val lastWeekStart = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(lastWeekCal.time)
+
+            lastWeekCal.add(Calendar.DAY_OF_YEAR, 6)
+            val lastWeekEnd = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(lastWeekCal.time)
+
+            val thisWeekTxns = allTransactions.filter { it.date >= thisWeekStart && it.date <= todayStr }
+            val lastWeekTxns = allTransactions.filter { it.date >= lastWeekStart && it.date <= lastWeekEnd }
+
+            if (thisWeekTxns.isNotEmpty() && lastWeekTxns.isNotEmpty()) {
+                val thisWeekByCategory = thisWeekTxns.groupBy { it.category }.mapValues { it.value.sumOf { t -> t.amount } }
+                val lastWeekByCategory = lastWeekTxns.groupBy { it.category }.mapValues { it.value.sumOf { t -> t.amount } }
+
+                // Find the category with the biggest increase
+                var biggestIncreaseCat: String? = null
+                var biggestIncreasePct = 0.0
+                for ((cat, thisWeekTotal) in thisWeekByCategory) {
+                    val lastWeekTotal = lastWeekByCategory[cat] ?: 0.0
+                    if (lastWeekTotal > 0) {
+                        val pctChange = ((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100
+                        if (pctChange > biggestIncreasePct) {
+                            biggestIncreasePct = pctChange
+                            biggestIncreaseCat = cat
+                        }
+                    }
+                }
+                if (biggestIncreaseCat != null && biggestIncreasePct > 10) {
+                    list.add("📊 You spent ${String.format("%.0f", biggestIncreasePct)}% more on $biggestIncreaseCat this week vs last week.")
+                }
+            }
+        } catch (e: Exception) {
+            // ignore week-over-week calculation errors
+        }
+
         // Default fallbacks if database is empty
         if (list.isEmpty()) {
             list.add("💡 Check back here after syncing your transactions to receive smart insights and savings tips!")

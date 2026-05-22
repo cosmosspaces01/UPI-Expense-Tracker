@@ -10,15 +10,24 @@
         android:fillColor="#6C63FF"
         android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
 
-    <!-- Rupee symbol ₹ -->
+    <!-- Rupee symbol ₹ - top bar -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M38,36 L68,36
-                          M38,44 L68,44
-                          M48,36 C48,36 60,36 60,44 C60,52 48,52 48,52
-                          L62,68"
-        android:strokeWidth="4"
-        android:strokeColor="#FFFFFF"
-        android:fillColor="#00000000" />
+        android:pathData="M38,34 L68,34 L68,38 L38,38 Z" />
+
+    <!-- Rupee symbol ₹ - second bar -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,42 L68,42 L68,46 L38,46 Z" />
+
+    <!-- Rupee symbol ₹ - vertical stroke -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,34 L44,34 L44,50 L40,50 Z" />
+
+    <!-- Rupee symbol ₹ - diagonal stroke -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,46 L52,46 L66,70 L62,70 Z" />
 
 </vector>

@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -57,15 +58,42 @@ fun TransactionsScreen(
     var selectedCategoryFilter by remember { mutableStateOf("All") }
     var sortBy by remember { mutableStateOf("Newest") } // Newest, Oldest, Highest, Lowest
 
+    // Amount range filter state
+    var minAmountText by remember { mutableStateOf("") }
+    var maxAmountText by remember { mutableStateOf("") }
+
+    // Date range mode state
+    var useDateRange by remember { mutableStateOf(false) }
+    var dateRangeStart by remember { mutableStateOf("") } // yyyy-MM-dd
+    var dateRangeEnd by remember { mutableStateOf("") }   // yyyy-MM-dd
+    var showStartDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
+
+    // Parse amount filters safely
+    val minAmount = minAmountText.toDoubleOrNull()
+    val maxAmount = maxAmountText.toDoubleOrNull()
+
     // Filtered transaction list
     val filteredTransactions = allTransactions.filter { txn ->
-        val matchesDate = txn.date == selectedDate
+        // Date filter: either single-day or date range mode
+        val matchesDate = if (useDateRange) {
+            val afterStart = dateRangeStart.isEmpty() || txn.date >= dateRangeStart
+            val beforeEnd = dateRangeEnd.isEmpty() || txn.date <= dateRangeEnd
+            afterStart && beforeEnd
+        } else {
+            txn.date == selectedDate
+        }
+
         val matchesSearch = txn.merchant.lowercase().contains(searchQuery.lowercase()) ||
                 txn.notes.lowercase().contains(searchQuery.lowercase()) ||
                 txn.amount.toString().contains(searchQuery)
         val matchesCategory = selectedCategoryFilter == "All" || txn.category == selectedCategoryFilter
 
-        matchesDate && matchesSearch && matchesCategory
+        // Amount range filter
+        val matchesMinAmount = minAmount == null || txn.amount >= minAmount
+        val matchesMaxAmount = maxAmount == null || txn.amount <= maxAmount
+
+        matchesDate && matchesSearch && matchesCategory && matchesMinAmount && matchesMaxAmount
     }.sortedWith { a, b ->
         when (sortBy) {
             "Oldest" -> a.time.compareTo(b.time)
@@ -80,45 +108,113 @@ fun TransactionsScreen(
             .fillMaxSize()
             .background(DarkBackground)
     ) {
-        // Date Selector Row
+        // Date Mode Toggle + Date Selector
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 12.dp)
         ) {
-            Text(
-                text = "Select Transaction Date",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = TextSecondary,
-                modifier = Modifier.padding(horizontal = 20.dp, bottom = 8.dp)
-            )
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                contentPadding = PaddingValues(horizontal = 20.dp)
+            // Toggle between single-day and date range
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                items(calendarList) { (dbDate, displayDate) ->
-                    val isSelected = dbDate == selectedDate
-                    val boxBg = if (isSelected) PrimaryPurple else CardBackground
-                    val textColor = if (isSelected) TextPrimary else TextSecondary
-                    
-                    Box(
-                        modifier = Modifier
-                            .width(60.dp)
-                            .height(64.dp)
-                            .background(boxBg, RoundedCornerShape(12.dp))
-                            .clickable { selectedDate = dbDate }
-                            .padding(8.dp),
-                        contentAlignment = Alignment.Center
+                Text(
+                    text = if (useDateRange) "Date Range Filter" else "Select Transaction Date",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextSecondary
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Date Range",
+                        tint = if (useDateRange) PrimaryPurple else TextSecondary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "Range",
+                        fontSize = 12.sp,
+                        color = if (useDateRange) PrimaryPurple else TextSecondary,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.clickable { useDateRange = !useDateRange }
+                    )
+                }
+            }
+
+            if (useDateRange) {
+                // Date Range Picker Row
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Start date button
+                    OutlinedButton(
+                        onClick = { showStartDatePicker = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (dateRangeStart.isNotEmpty()) PrimaryPurple else Color(0xFF2C2C2C)),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = CardBackground)
                     ) {
                         Text(
-                            text = displayDate,
-                            color = textColor,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                            lineHeight = 16.sp
+                            text = if (dateRangeStart.isNotEmpty()) "From: $dateRangeStart" else "Start Date",
+                            fontSize = 12.sp,
+                            color = if (dateRangeStart.isNotEmpty()) TextPrimary else TextSecondary
                         )
+                    }
+
+                    // End date button
+                    OutlinedButton(
+                        onClick = { showEndDatePicker = true },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, if (dateRangeEnd.isNotEmpty()) PrimaryPurple else Color(0xFF2C2C2C)),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = CardBackground)
+                    ) {
+                        Text(
+                            text = if (dateRangeEnd.isNotEmpty()) "To: $dateRangeEnd" else "End Date",
+                            fontSize = 12.sp,
+                            color = if (dateRangeEnd.isNotEmpty()) TextPrimary else TextSecondary
+                        )
+                    }
+                }
+            } else {
+                // Single-day scroll selector (existing)
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(horizontal = 20.dp)
+                ) {
+                    items(calendarList) { (dbDate, displayDate) ->
+                        val isSelected = dbDate == selectedDate
+                        val boxBg = if (isSelected) PrimaryPurple else CardBackground
+                        val textColor = if (isSelected) TextPrimary else TextSecondary
+
+                        Box(
+                            modifier = Modifier
+                                .width(60.dp)
+                                .height(64.dp)
+                                .background(boxBg, RoundedCornerShape(12.dp))
+                                .clickable { selectedDate = dbDate }
+                                .padding(8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = displayDate,
+                                color = textColor,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                lineHeight = 16.sp
+                            )
+                        }
                     }
                 }
             }
@@ -149,6 +245,45 @@ fun TransactionsScreen(
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
+
+            // Amount Range Filter Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = minAmountText,
+                    onValueChange = { minAmountText = it.filter { c -> c.isDigit() || c == '.' } },
+                    placeholder = { Text("Min ₹", color = TextSecondary, fontSize = 13.sp) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = CardBackground,
+                        unfocusedContainerColor = CardBackground,
+                        focusedBorderColor = PrimaryPurple,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                OutlinedTextField(
+                    value = maxAmountText,
+                    onValueChange = { maxAmountText = it.filter { c -> c.isDigit() || c == '.' } },
+                    placeholder = { Text("Max ₹", color = TextSecondary, fontSize = 13.sp) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = CardBackground,
+                        unfocusedContainerColor = CardBackground,
+                        focusedBorderColor = PrimaryPurple,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
 
             // Category filters horizontal row
             LazyRow(
@@ -259,6 +394,84 @@ fun TransactionsScreen(
                     )
                 }
             }
+        }
+    }
+
+    // DatePickerDialog for Start Date
+    if (showStartDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showStartDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val millis = datePickerState.selectedDateMillis
+                    if (millis != null) {
+                        dateRangeStart = dbDateFormat.format(Date(millis))
+                    }
+                    showStartDatePicker = false
+                }) {
+                    Text("OK", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStartDatePicker = false }) {
+                    Text("CANCEL", color = TextPrimary)
+                }
+            },
+            colors = DatePickerDefaults.colors(containerColor = CardBackground)
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = CardBackground,
+                    titleContentColor = TextPrimary,
+                    headlineContentColor = TextPrimary,
+                    weekdayContentColor = TextSecondary,
+                    dayContentColor = TextPrimary,
+                    selectedDayContainerColor = PrimaryPurple,
+                    todayContentColor = PrimaryPurple,
+                    todayDateBorderColor = PrimaryPurple
+                )
+            )
+        }
+    }
+
+    // DatePickerDialog for End Date
+    if (showEndDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showEndDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val millis = datePickerState.selectedDateMillis
+                    if (millis != null) {
+                        dateRangeEnd = dbDateFormat.format(Date(millis))
+                    }
+                    showEndDatePicker = false
+                }) {
+                    Text("OK", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEndDatePicker = false }) {
+                    Text("CANCEL", color = TextPrimary)
+                }
+            },
+            colors = DatePickerDefaults.colors(containerColor = CardBackground)
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = CardBackground,
+                    titleContentColor = TextPrimary,
+                    headlineContentColor = TextPrimary,
+                    weekdayContentColor = TextSecondary,
+                    dayContentColor = TextPrimary,
+                    selectedDayContainerColor = PrimaryPurple,
+                    todayContentColor = PrimaryPurple,
+                    todayDateBorderColor = PrimaryPurple
+                )
+            )
         }
     }
 }

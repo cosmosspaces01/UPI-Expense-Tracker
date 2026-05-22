@@ -85,7 +85,7 @@ fun AnalyticsScreen(
         .groupBy { it.merchant }
         .map { (name, txns) -> Pair(name, txns.sumOf { it.amount }) }
         .sortedByDescending { it.second }
-        .take(3)
+        .take(5)
 
     // Day-wise spend for the last 30 days
     val dailySpends = remember(monthTransactions) {

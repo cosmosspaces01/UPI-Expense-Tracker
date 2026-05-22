@@ -212,17 +212,31 @@ object SmsParser {
     }
 
     fun syncTodayTransactions(context: Context): List<TransactionEntity> {
+        return syncTransactionsForDate(context, System.currentTimeMillis())
+    }
+
+    /**
+     * Syncs SMS transactions for a specific date.
+     * @param dateMs Any timestamp within the target day (milliseconds since epoch)
+     */
+    fun syncTransactionsForDate(context: Context, dateMs: Long): List<TransactionEntity> {
         val transactions = mutableListOf<TransactionEntity>()
         val contentResolver = context.contentResolver
         
-        // Define day boundaries
+        // Define day boundaries for the given date
         val calendar = Calendar.getInstance()
+        calendar.timeInMillis = dateMs
         calendar.set(Calendar.HOUR_OF_DAY, 0)
         calendar.set(Calendar.MINUTE, 0)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
         val startTimeMs = calendar.timeInMillis
-        val endTimeMs = System.currentTimeMillis()
+
+        calendar.set(Calendar.HOUR_OF_DAY, 23)
+        calendar.set(Calendar.MINUTE, 59)
+        calendar.set(Calendar.SECOND, 59)
+        calendar.set(Calendar.MILLISECOND, 999)
+        val endTimeMs = calendar.timeInMillis
 
         val cursor = contentResolver.query(
             Uri.parse("content://sms/inbox"),
@@ -240,7 +254,7 @@ object SmsParser {
             while (it.moveToNext()) {
                 val address = it.getString(addressIndex) ?: ""
                 val body = it.getString(bodyIndex) ?: ""
-                val dateMs = it.getLong(dateIndex)
+                val smsDateMs = it.getLong(dateIndex)
 
                 // Optional bank sender filter:
                 // Check if address ends with any of the sender IDs
@@ -248,7 +262,7 @@ object SmsParser {
                 
                 // Parse the SMS if it's either a bank address or matches general keywords
                 if (isBankSMS || address.isNotEmpty()) {
-                    val txn = parseSMS(body, dateMs)
+                    val txn = parseSMS(body, smsDateMs)
                     if (txn != null) {
                         transactions.add(txn)
                     }
@@ -258,3 +272,4 @@ object SmsParser {
         return transactions
     }
 }
+

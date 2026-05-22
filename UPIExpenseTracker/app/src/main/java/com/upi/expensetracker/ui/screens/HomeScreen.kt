@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -42,6 +43,7 @@ fun HomeScreen(
     val userName = viewModel.userName
     
     var isSyncing by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val recentTransactions = transactions.take(5)
     val todayFormatted = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())
@@ -122,7 +124,7 @@ fun HomeScreen(
             }
         }
 
-        // Sync Button
+        // Sync Today Button
         item {
             Button(
                 onClick = {
@@ -166,6 +168,36 @@ fun HomeScreen(
                             fontSize = 15.sp
                         )
                     }
+                }
+            }
+        }
+
+        // Sync Past Date Button
+        item {
+            OutlinedButton(
+                onClick = { showDatePicker = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C)),
+                enabled = !isSyncing
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Pick Date",
+                        tint = TextSecondary
+                    )
+                    Text(
+                        text = "Sync a Past Date",
+                        fontWeight = FontWeight.Medium,
+                        color = TextSecondary,
+                        fontSize = 14.sp
+                    )
                 }
             }
         }
@@ -224,6 +256,61 @@ fun HomeScreen(
                     )
                 }
             }
+        }
+    }
+
+    // Date Picker Dialog for syncing a past date
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            showDatePicker = false
+                            isSyncing = true
+                            val selectedDateStr = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(selectedMillis))
+                            viewModel.syncTransactionsForDate(selectedMillis) { count ->
+                                isSyncing = false
+                                if (count >= 0) {
+                                    Toast.makeText(context, "Synced $count transactions for $selectedDateStr", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Sync failed for $selectedDateStr", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                    }
+                ) {
+                    Text("SYNC", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("CANCEL", color = TextPrimary)
+                }
+            },
+            colors = DatePickerDefaults.colors(
+                containerColor = CardBackground
+            )
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = CardBackground,
+                    titleContentColor = TextPrimary,
+                    headlineContentColor = TextPrimary,
+                    weekdayContentColor = TextSecondary,
+                    yearContentColor = TextPrimary,
+                    currentYearContentColor = PrimaryPurple,
+                    selectedYearContainerColor = PrimaryPurple,
+                    dayContentColor = TextPrimary,
+                    selectedDayContainerColor = PrimaryPurple,
+                    todayContentColor = PrimaryPurple,
+                    todayDateBorderColor = PrimaryPurple
+                )
+            )
         }
     }
 }

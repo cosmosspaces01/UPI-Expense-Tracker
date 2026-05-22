@@ -79,6 +79,22 @@ class MainViewModel(
         }
     }
 
+    // Sync SMS for a specific selected date (allows syncing past dates)
+    fun syncTransactionsForDate(dateMs: Long, onSyncComplete: (Int) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val txns = SmsParser.syncTransactionsForDate(context, dateMs)
+                if (txns.isNotEmpty()) {
+                    transactionDao.insertTransactions(txns)
+                }
+                onSyncComplete(txns.size)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onSyncComplete(-1)
+            }
+        }
+    }
+
     // CRUD transactions
     fun updateTransaction(txn: TransactionEntity) {
         viewModelScope.launch {
