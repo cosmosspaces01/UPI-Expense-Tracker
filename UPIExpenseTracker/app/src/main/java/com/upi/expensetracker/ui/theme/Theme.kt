@@ -9,31 +9,43 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryPurple,
-    secondary = SuccessGreen,
-    tertiary = AccentBlue,
-    background = DarkBackground,
-    surface = CardBackground,
-    error = WarningRed,
-    onPrimary = TextPrimary,
-    onSecondary = DarkBackground,
-    onBackground = TextPrimary,
-    onSurface = TextPrimary,
-    onError = TextPrimary
+// ══════════════════════════════════════════════════════════
+// Arctic Blue Material 3 Dark Color Scheme
+// ══════════════════════════════════════════════════════════
+
+private val ArcticBlueScheme = darkColorScheme(
+    primary        = AccentBlue,
+    onPrimary      = TextPrimary,
+    primaryContainer   = AccentBlueMid,
+    onPrimaryContainer = TextPrimary,
+    secondary      = SuccessGreen,
+    onSecondary    = Background,
+    tertiary       = AccentBlueDim,
+    background     = Background,
+    onBackground   = TextPrimary,
+    surface        = Surface,
+    onSurface      = TextPrimary,
+    surfaceVariant = SurfaceElevated,
+    onSurfaceVariant = TextSecondary,
+    error          = DebitRed,
+    onError        = TextPrimary,
+    outline        = Divider,
+    outlineVariant = AccentBlueMid
 )
 
 @Composable
 fun UPIExpenseTrackerTheme(
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme
+    val colorScheme = ArcticBlueScheme
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = DarkBackground.toArgb()
-            window.navigationBarColor = DarkBackground.toArgb()
+            // Status bar and navigation bar match the page background
+            window.statusBarColor = Background.toArgb()
+            window.navigationBarColor = Background.toArgb()
+            // Use light (white) icons on the dark background
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
             WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
         }

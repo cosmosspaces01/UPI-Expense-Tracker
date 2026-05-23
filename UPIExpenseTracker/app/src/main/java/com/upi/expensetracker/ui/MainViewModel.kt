@@ -102,6 +102,39 @@ class MainViewModel(
         }
     }
 
+    // Manually add a transaction (when user didn't receive SMS)
+    fun addTransaction(
+        amount: Double,
+        merchant: String,
+        category: String,
+        date: String,
+        time: String,
+        description: String,
+        notes: String
+    ) {
+        viewModelScope.launch {
+            val txn = TransactionEntity(
+                id = UUID.randomUUID().toString(),
+                amount = amount,
+                merchant = merchant.ifBlank { "Manual Entry" },
+                accountLast4 = "XXXX",
+                refId = "MANUAL-${System.currentTimeMillis()}",
+                date = date,
+                time = time,
+                category = category,
+                description = description.ifBlank { "Manual transaction" },
+                notes = notes,
+                isSplit = false,
+                splitWith = "",
+                splitAmount = 0.0,
+                isSettled = false,
+                rawSMS = "",
+                isRecurring = false
+            )
+            transactionDao.insertTransactions(listOf(txn))
+        }
+    }
+
     // CRUD categories
     fun insertCategory(name: String, color: String, icon: String, budget: Double?) {
         viewModelScope.launch {

@@ -5,24 +5,46 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Horizontal darker blue stripe (the ribbon band) -->
-    <!-- Original SVG: rect x=1.04 y=11.96 w=30 h=8.08 in 32x32 viewport -->
-    <!-- Mapped to 108x108: y=40.4, h=27.3 (full width) -->
-    <path
-        android:fillColor="#4391B2"
-        android:pathData="M0,40h108v28H0z" />
+    <!-- Scale and center the 64x64 SVG content into 108x108 adaptive icon canvas -->
+    <!-- Scale factor: 108/64 = 1.6875, translate to center -->
+    <group
+        android:scaleX="1.6875"
+        android:scaleY="1.6875">
 
-    <!-- Vertical lighter blue stripe (the ribbon band) -->
-    <!-- Original SVG: rect x=12 y=1 w=8.08 h=30 in 32x32 viewport -->
-    <!-- Mapped to 108x108: x=40.5, w=27.3 (full height) -->
-    <path
-        android:fillColor="#96CEE5"
-        android:pathData="M40,0h28v108H40z" />
+        <!-- Top half circle - lighter purple -->
+        <path
+            android:fillColor="#8579A3"
+            android:pathData="M32,7C18.193,7,7,18.193,7,32h50C57,18.193,45.807,7,32,7z" />
 
-    <!-- Center knot/overlap (intersection highlight) -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:fillAlpha="0.15"
-        android:pathData="M40,40h28v28H40z" />
+        <!-- Bottom half circle - darker purple -->
+        <path
+            android:fillColor="#685683"
+            android:pathData="M32,57c13.807,0,25,-11.193,25,-25H7C7,45.807,18.193,57,32,57z" />
 
+        <!-- Shuttlecock body - light gray -->
+        <path
+            android:fillColor="#CCCCCC"
+            android:pathData="M62.824,5.782L52.813,16.786l7.268,-5.615l-1.347,3.055l-6.59,6.832l-0.537,2.679l-7.181,6.105l4.333,-1.72l-0.192,1.104l-12.54,6.63c0.836,2.563,0.182,5.23,-1.273,7.207l6.654,3.249l-2.543,0.885l-4.784,-1.94l3.415,3.288l-3.44,-0.209l-2.615,-1.38l-0.248,-1.115c-2.412,0.978,-5.19,0.768,-7.441,-0.622L9.685,59.06l-3.622,0.565L22.09,43.864c-1.935,-2.043,-2.598,-4.292,-2.048,-6.864h11.686L63.192,2.537L62.824,5.782zM24.251,32.739l2.464,0.844l-4.901,-15.277l-1.173,2.461l1.902,9.24l-3.159,-2.384L19.09,29.32c0,0,3.747,5.137,4.074,5.469L24.251,32.739z" />
+
+        <!-- Shuttlecock feathers - dark gray -->
+        <path
+            android:fillColor="#666666"
+            android:pathData="M28.011,29.903L28.466,19.593L29.974,22.435L31.523,16.585L32.745,21.612L35.436,16.195L34.462,23.569L38.685,15.42L38.696,19.216L48.767,9.653L48.277,12.211L54.099,6.482L54.041,9.481L29.847,33.807z" />
+
+        <!-- Shuttlecock details - medium gray -->
+        <path
+            android:fillColor="#808080"
+            android:pathData="M50.179,31.349l-5.017,2.694l2.807,-0.267l1.58,1.607l-5.095,1.155l1.628,0.624l-0.759,0.945l-8.935,-0.298c-0.021,-0.424,-0.078,-0.851,-0.173,-1.276l12.168,-6.042L50.179,31.349zM35.598,41.652l8.056,1.327l4.804,-2.221l-12.179,-1.233C36.149,40.266,35.916,40.982,35.598,41.652zM28.058,46.443l0.633,2.758l2.719,0.753l-1.467,-3.721C29.323,46.376,28.69,46.446,28.058,46.443zM20.042,37c0.066,0.001,-3.05,-0.707,-3.05,-0.707l-0.781,1.074l2.308,0.945l-4.329,0.737l-1.174,1.92l7.033,-0.655C19.793,39.269,19.792,38.168,20.042,37zM20.872,42.283L6.881,56.05l-0.818,3.575L22.09,43.864C21.604,43.35,21.198,42.824,20.872,42.283z" />
+
+        <!-- Shuttlecock cork - teal circle -->
+        <path
+            android:fillColor="#6BC4D2"
+            android:pathData="M28,38m-4,0a4,4,0,1,1,8,0a4,4,0,1,1,-8,0" />
+
+        <!-- Shuttlecock cork shadow - dark teal -->
+        <path
+            android:fillColor="#508D9B"
+            android:pathData="M26.179,34.437C24.886,35.1,24,36.447,24,38c0,2.209,1.791,4,4,4c1.56,0,2.911,-0.893,3.571,-2.195C28.148,41.557,24.436,37.879,26.179,34.437z" />
+
+    </group>
 </vector>

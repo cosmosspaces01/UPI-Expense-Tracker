@@ -143,7 +143,7 @@ fun CategoriesScreen(
                         .height(115.dp)
                         .clickable { showCreateDialog = true },
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFF2C2C2C))
+                    colors = CardDefaults.cardColors(containerColor = AccentBlueMid)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -257,7 +257,7 @@ fun CategoriesScreen(
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = Color(0xFF2C2C2C),
+                            unfocusedBorderColor = AccentBlueMid,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -273,7 +273,7 @@ fun CategoriesScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = Color(0xFF2C2C2C),
+                            unfocusedBorderColor = AccentBlueMid,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -301,7 +301,7 @@ fun CategoriesScreen(
                                             )
                                             .border(
                                                 width = if (isSelected) 2.dp else 1.dp,
-                                                color = if (isSelected) PrimaryPurple else Color(0xFF2C2C2C),
+                                                color = if (isSelected) PrimaryPurple else AccentBlueMid,
                                                 shape = RoundedCornerShape(8.dp)
                                             )
                                             .clickable { selectedIcon = iconId },
@@ -403,7 +403,7 @@ fun CategoriesScreen(
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = Color(0xFF2C2C2C),
+                            unfocusedBorderColor = AccentBlueMid,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -419,7 +419,7 @@ fun CategoriesScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = Color(0xFF2C2C2C),
+                            unfocusedBorderColor = AccentBlueMid,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -447,7 +447,7 @@ fun CategoriesScreen(
                                             )
                                             .border(
                                                 width = if (isSelected) 2.dp else 1.dp,
-                                                color = if (isSelected) PrimaryPurple else Color(0xFF2C2C2C),
+                                                color = if (isSelected) PrimaryPurple else AccentBlueMid,
                                                 shape = RoundedCornerShape(8.dp)
                                             )
                                             .clickable { editCategoryIcon = iconId },

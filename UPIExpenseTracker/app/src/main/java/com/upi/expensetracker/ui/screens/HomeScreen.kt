@@ -2,7 +2,9 @@ package com.upi.expensetracker.ui.screens
 
 import android.widget.Toast
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -58,8 +60,8 @@ fun HomeScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
-            .padding(horizontal = 20.dp),
+            .background(Background)
+            .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
         contentPadding = PaddingValues(top = 24.dp, bottom = 24.dp)
     ) {
@@ -68,58 +70,64 @@ fun HomeScreen(
             Column {
                 Text(
                     text = "$greeting, $userName",
-                    fontSize = 24.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
                 Text(
                     text = todayFormatted,
-                    fontSize = 14.sp,
-                    color = TextSecondary,
+                    fontSize = 13.sp,
+                    color = TextMuted,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }
 
-        // Today's Spent Gradient Card
+        // Today's Spent Hero Card — Arctic Blue
         item {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(PrimaryPurple, Color(0xFF8E2DE2), Color(0xFF4A00E0))
-                        ),
-                        shape = RoundedCornerShape(16.dp)
-                    )
-                    .padding(24.dp)
+                    .background(Surface, RoundedCornerShape(20.dp))
+                    .border(BorderStroke(1.dp, AccentBlueMid), RoundedCornerShape(20.dp))
             ) {
-                Column(
-                    modifier = Modifier.fillMaxHeight(),
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "TODAY'S SPEND",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White.copy(alpha = 0.7f),
-                        letterSpacing = 1.sp
-                    )
-                    val spend = todayTotal ?: 0.0
-                    Text(
-                        text = "₹${String.format("%,.2f", spend)}",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextPrimary
-                    )
-                    val todayDateString = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-                    val todayTxnCount = transactions.filter { it.date == todayDateString }.size
-                    val txnText = if (todayTxnCount == 1) "1 transaction tracked today" else "$todayTxnCount transactions tracked today"
-                    Text(
-                        text = "$txnText • Secured Offline",
-                        fontSize = 11.sp,
-                        color = Color.White.copy(alpha = 0.6f)
+                Column {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Today's spend",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = TextMuted
+                        )
+                        val spend = todayTotal ?: 0.0
+                        Text(
+                            text = "₹${String.format("%,.2f", spend)}",
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        val todayDateString = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                        val todayTxnCount = transactions.filter { it.date == todayDateString }.size
+                        val txnText = if (todayTxnCount == 1) "1 transaction" else "$todayTxnCount transactions"
+                        Text(
+                            text = "$txnText tracked today",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Light,
+                            color = TextMuted
+                        )
+                    }
+                    // Accent blue line at bottom
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .padding(horizontal = 1.dp)
+                            .background(AccentBlue, RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
                     )
                 }
             }
@@ -141,15 +149,15 @@ fun HomeScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CardBackground),
-                shape = RoundedCornerShape(12.dp),
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
+                shape = RoundedCornerShape(14.dp),
                 enabled = !isSyncing
             ) {
                 if (isSyncing) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = PrimaryPurple,
+                        modifier = Modifier.size(22.dp),
+                        color = TextPrimary,
                         strokeWidth = 2.dp
                     )
                 } else {
@@ -160,11 +168,11 @@ fun HomeScreen(
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Sync",
-                            tint = PrimaryPurple
+                            tint = TextPrimary
                         )
                         Text(
                             text = "Sync Today's Transactions",
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = TextPrimary,
                             fontSize = 15.sp
                         )
@@ -180,8 +188,8 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C2C2C)),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, AccentBlueMid),
                 enabled = !isSyncing
             ) {
                 Row(
@@ -324,14 +332,15 @@ fun TransactionItemCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable { onClick() }
+            .border(BorderStroke(0.5.dp, Divider), RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = Surface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -344,14 +353,14 @@ fun TransactionItemCard(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .background(Color(0xFF2C2C2C), RoundedCornerShape(12.dp)),
+                        .background(SurfaceElevated, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     val initial = if (transaction.merchant.isNotEmpty()) transaction.merchant[0].toString() else "T"
                     Text(
                         text = initial.uppercase(),
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryPurple,
+                        color = AccentBlue,
                         fontSize = 18.sp
                     )
                 }
@@ -377,7 +386,7 @@ fun TransactionItemCard(
                         Text(
                             text = if (hasCustomDesc) transaction.description else transaction.notes,
                             fontSize = 12.sp,
-                            color = Color(0xFFB0B0B0),
+                            color = TextSecondary,
                             maxLines = 1,
                             modifier = Modifier.padding(top = 2.dp)
                         )
@@ -391,7 +400,8 @@ fun TransactionItemCard(
                         // Category pill
                         Box(
                             modifier = Modifier
-                                .background(Color(0xFF2C2C2C), RoundedCornerShape(8.dp))
+                                .background(Divider, RoundedCornerShape(20.dp))
+                                .border(BorderStroke(0.5.dp, AccentBlueMid), RoundedCornerShape(20.dp))
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
                             Text(
@@ -406,7 +416,7 @@ fun TransactionItemCard(
                         if (transaction.isRecurring) {
                             Box(
                                 modifier = Modifier
-                                    .background(Color(0xFF1A3A2A), RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF0A2A1A), RoundedCornerShape(20.dp))
                                     .padding(horizontal = 6.dp, vertical = 2.dp)
                             ) {
                                 Text(
@@ -421,7 +431,7 @@ fun TransactionItemCard(
                         Text(
                             text = transaction.time,
                             fontSize = 11.sp,
-                            color = TextSecondary
+                            color = TextMuted
                         )
                     }
                 }
@@ -432,7 +442,7 @@ fun TransactionItemCard(
                     text = "₹${String.format("%,.2f", transaction.amount)}",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = WarningRed
+                    color = DebitRed
                 )
                 if (transaction.isSplit) {
                     Text(
@@ -466,7 +476,7 @@ fun SkeletonCard() {
             .fillMaxWidth()
             .alpha(alpha),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = Surface)
     ) {
         Row(
             modifier = Modifier
@@ -477,7 +487,7 @@ fun SkeletonCard() {
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .background(Color(0xFF2C2C2C), RoundedCornerShape(12.dp))
+                    .background(SurfaceElevated, RoundedCornerShape(12.dp))
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -485,21 +495,21 @@ fun SkeletonCard() {
                     modifier = Modifier
                         .fillMaxWidth(0.6f)
                         .height(16.dp)
-                        .background(Color(0xFF2C2C2C), RoundedCornerShape(4.dp))
+                        .background(SurfaceElevated, RoundedCornerShape(4.dp))
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(0.3f)
                         .height(12.dp)
-                        .background(Color(0xFF2C2C2C), RoundedCornerShape(4.dp))
+                        .background(SurfaceElevated, RoundedCornerShape(4.dp))
                 )
             }
             Box(
                 modifier = Modifier
                     .width(60.dp)
                     .height(20.dp)
-                    .background(Color(0xFF2C2C2C), RoundedCornerShape(4.dp))
+                    .background(SurfaceElevated, RoundedCornerShape(4.dp))
             )
         }
     }

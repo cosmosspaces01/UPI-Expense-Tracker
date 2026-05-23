@@ -18,8 +18,10 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.upi.expensetracker.ui.theme.PrimaryPurple
-import com.upi.expensetracker.ui.theme.PrimaryPurpleLight
+import com.upi.expensetracker.ui.theme.AccentBlue
+import com.upi.expensetracker.ui.theme.AccentBlueMid
+import com.upi.expensetracker.ui.theme.Divider
+import com.upi.expensetracker.ui.theme.TextMuted
 import com.upi.expensetracker.ui.theme.TextSecondary
 import kotlin.math.max
 
@@ -29,7 +31,7 @@ fun SpendBarChart(
     modifier: Modifier = Modifier.fillMaxWidth().height(180.dp)
 ) {
     val textMeasurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(color = TextSecondary, fontSize = 10.sp)
+    val labelStyle = TextStyle(color = TextMuted, fontSize = 10.sp)
 
     Canvas(modifier = modifier) {
         val width = size.width
@@ -56,7 +58,7 @@ fun SpendBarChart(
         for (i in 0..gridLines) {
             val y = chartHeight - (chartHeight / gridLines) * i
             drawLine(
-                color = Color(0xFF2C2C2C),
+                color = Divider,
                 start = Offset(paddingLeft, y),
                 end = Offset(width, y),
                 strokeWidth = 1f
@@ -83,9 +85,9 @@ fun SpendBarChart(
             val y = chartHeight - barHeight
 
             if (spend > 0) {
-                // Gradient for bars
+                // Gradient for bars — Arctic Blue accent
                 val brush = Brush.verticalGradient(
-                    colors = listOf(PrimaryPurple, PrimaryPurpleLight),
+                    colors = listOf(AccentBlue, AccentBlueMid),
                     startY = y.toFloat(),
                     endY = chartHeight
                 )
@@ -107,7 +109,7 @@ fun TrendLineChart(
     modifier: Modifier = Modifier.fillMaxWidth().height(180.dp)
 ) {
     val textMeasurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(color = TextSecondary, fontSize = 10.sp)
+    val labelStyle = TextStyle(color = TextMuted, fontSize = 10.sp)
 
     Canvas(modifier = modifier) {
         val width = size.width
@@ -134,7 +136,7 @@ fun TrendLineChart(
         for (i in 0..gridLines) {
             val y = chartHeight - (chartHeight / gridLines) * i
             drawLine(
-                color = Color(0xFF2C2C2C),
+                color = Divider,
                 start = Offset(paddingLeft, y),
                 end = Offset(width, y),
                 strokeWidth = 1f
@@ -178,7 +180,7 @@ fun TrendLineChart(
             drawPath(
                 path = fillPath,
                 brush = Brush.verticalGradient(
-                    colors = listOf(PrimaryPurple.copy(alpha = 0.4f), Color.Transparent),
+                    colors = listOf(AccentBlue.copy(alpha = 0.4f), Color.Transparent),
                     startY = 0f,
                     endY = chartHeight
                 )
@@ -197,20 +199,20 @@ fun TrendLineChart(
 
             drawPath(
                 path = strokePath,
-                color = PrimaryPurple,
-                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
+                color = AccentBlue,
+                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
             )
 
             // Draw points and labels
             for (i in points.indices) {
                 val p = points[i]
                 drawCircle(
-                    color = PrimaryPurpleLight,
+                    color = AccentBlueMid,
                     radius = 4.dp.toPx(),
                     center = p
                 )
                 drawCircle(
-                    color = PrimaryPurple,
+                    color = AccentBlue,
                     radius = 2.dp.toPx(),
                     center = p
                 )

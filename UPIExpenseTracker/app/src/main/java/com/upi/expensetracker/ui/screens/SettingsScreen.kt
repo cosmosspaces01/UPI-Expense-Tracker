@@ -80,7 +80,7 @@ fun SettingsScreen(
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color(0xFF2C2C2C),
+                        unfocusedBorderColor = AccentBlueMid,
                         focusedLabelColor = PrimaryPurple
                     ),
                     shape = RoundedCornerShape(12.dp)
@@ -223,7 +223,7 @@ fun SettingsScreen(
                         Toast.makeText(context, "Mock data successfully injected!", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2C2C)),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlueMid),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(

@@ -175,7 +175,7 @@ fun AnalyticsScreen(
                     // Comparison Badge
                     if (totalSpentLastMonth > 0) {
                         val isIncrease = deltaPercent >= 0
-                        val badgeColor = if (isIncrease) WarningRed else SuccessGreen
+                        val badgeColor = if (isIncrease) DebitRed else SuccessGreen
                         val arrow = if (isIncrease) "↑" else "↓"
                         Text(
                             text = "$arrow ${String.format("%.1f", Math.abs(deltaPercent))}% vs last month (₹${String.format("%,.0f", totalSpentLastMonth)})",
@@ -215,7 +215,7 @@ fun AnalyticsScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(12.dp)
-                                .background(Color(0xFF2C2C2C), RoundedCornerShape(6.dp))
+                                .background(SurfaceElevated, RoundedCornerShape(6.dp))
                         ) {
                             categoryBreakdown.forEach { item ->
                                 val weight = item.percentage.toFloat() / 100f
@@ -305,7 +305,7 @@ fun AnalyticsScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Box(
                             modifier = Modifier
-                                .background(Color(0xFF2C2C2C), RoundedCornerShape(8.dp))
+                                .background(Divider, RoundedCornerShape(8.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         ) {
                             Text(
@@ -350,7 +350,7 @@ fun AnalyticsScreen(
                                         text = "${index + 1}.",
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = PrimaryPurple,
+                                        color = AccentBlue,
                                         modifier = Modifier.width(20.dp)
                                     )
                                     Text(
@@ -364,11 +364,11 @@ fun AnalyticsScreen(
                                     text = "₹${String.format("%,.2f", amount)}",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = WarningRed
+                                    color = DebitRed
                                 )
                             }
                             if (index < topMerchants.size - 1) {
-                                Divider(color = Color(0xFF2C2C2C), thickness = 1.dp)
+                                Divider(color = Divider, thickness = 1.dp)
                             }
                         }
                     }

@@ -10,7 +10,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Menu
@@ -34,12 +36,10 @@ import com.upi.expensetracker.data.AppDatabase
 import com.upi.expensetracker.data.TransactionEntity
 import com.upi.expensetracker.ui.MainViewModel
 import com.upi.expensetracker.ui.MainViewModelFactory
+import com.upi.expensetracker.ui.components.AddTransactionSheet
 import com.upi.expensetracker.ui.components.EditTransactionSheet
 import com.upi.expensetracker.ui.screens.*
-import com.upi.expensetracker.ui.theme.DarkBackground
-import com.upi.expensetracker.ui.theme.BottomNavSelected
-import com.upi.expensetracker.ui.theme.BottomNavUnselected
-import com.upi.expensetracker.ui.theme.UPIExpenseTrackerTheme
+import com.upi.expensetracker.ui.theme.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,18 +97,44 @@ fun MainAppLayout(viewModel: MainViewModel) {
     // Active transaction editing bottom sheet state
     var transactionEditing by remember { mutableStateOf<TransactionEntity?>(null) }
 
+    // Add new transaction bottom sheet state
+    var showAddTransaction by remember { mutableStateOf(false) }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
+        floatingActionButton = {
+            // Show FAB on Home and Transactions screens
+            if (currentRoute in listOf("home", "transactions")) {
+                FloatingActionButton(
+                    onClick = { showAddTransaction = true },
+                    containerColor = PrimaryPurple,
+                    contentColor = TextPrimary,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add Transaction"
+                    )
+                }
+            }
+        },
         bottomBar = {
             // Hide bottom navigation if we are inside detailed screen views (budgets, categories, insights)
             val showBottomBar = currentRoute in listOf("home", "transactions", "analytics", "settings")
             if (showBottomBar) {
-                NavigationBar(
-                    containerColor = DarkBackground,
-                    tonalElevation = 8.dp
-                ) {
+                Column {
+                    // Top border line instead of shadow
+                    HorizontalDivider(
+                        thickness = 0.5.dp,
+                        color = Divider
+                    )
+                    NavigationBar(
+                        containerColor = Background,
+                        tonalElevation = 0.dp,
+                        modifier = Modifier.height(64.dp)
+                    ) {
                     // Home
                     NavigationBarItem(
                         selected = currentRoute == "home",
@@ -122,11 +148,11 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                         label = { Text("Home", fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BottomNavSelected,
-                            selectedTextColor = BottomNavSelected,
-                            unselectedIconColor = BottomNavUnselected,
-                            unselectedTextColor = BottomNavUnselected,
-                            indicatorColor = Color.Transparent
+                            selectedIconColor = AccentBlue,
+                            selectedTextColor = AccentBlue,
+                            unselectedIconColor = TextMuted,
+                            unselectedTextColor = TextMuted,
+                            indicatorColor = SurfaceElevated
                         )
                     )
                     
@@ -143,11 +169,11 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         icon = { Icon(Icons.Default.List, contentDescription = "Transactions") },
                         label = { Text("Transactions", fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BottomNavSelected,
-                            selectedTextColor = BottomNavSelected,
-                            unselectedIconColor = BottomNavUnselected,
-                            unselectedTextColor = BottomNavUnselected,
-                            indicatorColor = Color.Transparent
+                            selectedIconColor = AccentBlue,
+                            selectedTextColor = AccentBlue,
+                            unselectedIconColor = TextMuted,
+                            unselectedTextColor = TextMuted,
+                            indicatorColor = SurfaceElevated
                         )
                     )
 
@@ -164,11 +190,11 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         icon = { Icon(Icons.Default.Menu, contentDescription = "Analytics") },
                         label = { Text("Analytics", fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BottomNavSelected,
-                            selectedTextColor = BottomNavSelected,
-                            unselectedIconColor = BottomNavUnselected,
-                            unselectedTextColor = BottomNavUnselected,
-                            indicatorColor = Color.Transparent
+                            selectedIconColor = AccentBlue,
+                            selectedTextColor = AccentBlue,
+                            unselectedIconColor = TextMuted,
+                            unselectedTextColor = TextMuted,
+                            indicatorColor = SurfaceElevated
                         )
                     )
 
@@ -185,13 +211,14 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                         label = { Text("Settings", fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = BottomNavSelected,
-                            selectedTextColor = BottomNavSelected,
-                            unselectedIconColor = BottomNavUnselected,
-                            unselectedTextColor = BottomNavUnselected,
-                            indicatorColor = Color.Transparent
+                            selectedIconColor = AccentBlue,
+                            selectedTextColor = AccentBlue,
+                            unselectedIconColor = TextMuted,
+                            unselectedTextColor = TextMuted,
+                            indicatorColor = SurfaceElevated
                         )
                     )
+                    }
                 }
             }
         }
@@ -270,6 +297,21 @@ fun MainAppLayout(viewModel: MainViewModel) {
                 viewModel.updateTransaction(updatedTxn)
                 transactionEditing = null
                 Toast.makeText(context, "Transaction saved!", Toast.LENGTH_SHORT).show()
+            }
+        )
+    }
+
+    // Modal Add Transaction Sheet
+    if (showAddTransaction) {
+        val todayDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+        AddTransactionSheet(
+            categories = allCategories,
+            preselectedDate = todayDate,
+            onDismiss = { showAddTransaction = false },
+            onAdd = { amount, merchant, category, date, time, description, notes ->
+                viewModel.addTransaction(amount, merchant, category, date, time, description, notes)
+                showAddTransaction = false
+                Toast.makeText(context, "✅ Transaction added!", Toast.LENGTH_SHORT).show()
             }
         )
     }

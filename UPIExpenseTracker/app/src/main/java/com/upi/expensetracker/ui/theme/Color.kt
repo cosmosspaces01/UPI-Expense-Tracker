@@ -2,23 +2,46 @@ package com.upi.expensetracker.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val DarkBackground = Color(0xFF0F0F0F)
-val CardBackground = Color(0xFF1A1A1A)
-val PrimaryPurple = Color(0xFF6C63FF)
-val PrimaryPurpleLight = Color(0xFF8F88FF)
-val SuccessGreen = Color(0xFF00C896)
-val WarningRed = Color(0xFFFF6B6B)
+// ══════════════════════════════════════════════════════════
+// Arctic Blue — Premium Dark Fintech Theme
+// ══════════════════════════════════════════════════════════
 
-val TextPrimary = Color(0xFFFFFFFF)
-val TextSecondary = Color(0xFF9A9A9A)
+// Core surfaces
+val Background       = Color(0xFF080C14)  // page background
+val Surface          = Color(0xFF0F1825)  // cards, bottom sheets
+val SurfaceElevated  = Color(0xFF162030)  // elevated cards, modals
 
-// Secondary/Accent elements
-val AccentBlue = Color(0xFF0984E3)
-val AccentOrange = Color(0xFFFF9F43)
-val AccentPink = Color(0xFFE84393)
-val AccentYellow = Color(0xFFFDCB6E)
-val AccentCoral = Color(0xFFE17055)
-val AccentGrey = Color(0xFF636E72)
-val BottomNavSelected = Color(0xFF6C63FF)
-val BottomNavUnselected = Color(0xFF555555)
-val BorderColor = Color(0xFF2C2C2C)
+// Accent palette
+val AccentBlue       = Color(0xFF378ADD)  // primary CTA, active states
+val AccentBlueMid    = Color(0xFF185FA5)  // secondary buttons, borders
+val AccentBlueDim    = Color(0xFF0C447C)  // subtle accents, dividers
+
+// Text hierarchy
+val TextPrimary      = Color(0xFFFFFFFF)  // headings, amounts
+val TextSecondary    = Color(0xFFA0C0E8)  // labels, subtitles
+val TextMuted        = Color(0xFF3A5A80)  // timestamps, hints
+
+// Semantic colors
+val DebitRed         = Color(0xFFFF6B6B)  // debited amounts
+val SuccessGreen     = Color(0xFF4ECBA0)  // settled, credited
+val WarningAmber     = Color(0xFFFAC75F)  // budget warnings
+
+// Structural
+val Divider          = Color(0xFF0D1E35)  // list dividers, borders
+
+// ── Backward-compatible aliases ──────────────────────────
+// These map old names → new Arctic Blue values so existing
+// code compiles without a mass search-replace of every file.
+val DarkBackground      = Background
+val CardBackground      = Surface
+val PrimaryPurple       = AccentBlue
+val PrimaryPurpleLight  = AccentBlueMid
+val WarningRed          = DebitRed
+val AccentOrange        = WarningAmber
+val AccentPink          = Color(0xFFE84393)
+val AccentYellow        = WarningAmber
+val AccentCoral         = DebitRed
+val AccentGrey          = TextMuted
+val BottomNavSelected   = AccentBlue
+val BottomNavUnselected = TextMuted
+val BorderColor         = Divider

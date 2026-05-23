@@ -206,7 +206,7 @@ fun BudgetsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(8.dp)
-                                    .background(Color(0xFF2C2C2C), RoundedCornerShape(4.dp))
+                                    .background(SurfaceElevated, RoundedCornerShape(4.dp))
                             ) {
                                 Box(
                                     modifier = Modifier
@@ -248,7 +248,7 @@ fun BudgetsScreen(
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = Color(0xFF2C2C2C),
+                            unfocusedBorderColor = AccentBlueMid,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),

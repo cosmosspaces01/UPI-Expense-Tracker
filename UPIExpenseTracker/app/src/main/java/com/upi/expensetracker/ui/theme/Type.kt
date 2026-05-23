@@ -2,58 +2,118 @@ package com.upi.expensetracker.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.upi.expensetracker.R
 
-// Set of Material typography styles to start with
+// ══════════════════════════════════════════════════════════
+// Nunito Font Family — bundled TTF files from Google Fonts
+// ══════════════════════════════════════════════════════════
+
+val NunitoFamily = FontFamily(
+    Font(R.font.nunito_light,    FontWeight.Light),     // 300
+    Font(R.font.nunito_regular,  FontWeight.Normal),    // 400
+    Font(R.font.nunito_semibold, FontWeight.SemiBold),  // 600
+    Font(R.font.nunito_bold,     FontWeight.Bold)       // 700
+)
+
+// ══════════════════════════════════════════════════════════
+// Material 3 Typography — Arctic Blue scale
+// ══════════════════════════════════════════════════════════
+//
+// Font size reference:
+//   Hero amount      → 32sp  Bold
+//   Screen title     → 20sp  Bold
+//   Card title       → 15sp  SemiBold
+//   Body/description → 13sp  Normal
+//   Caption/timestamp → 11sp Light
+
 val Typography = Typography(
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp,
+    // Hero amounts, large numbers
+    headlineLarge = TextStyle(
+        fontFamily = NunitoFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 32.sp,
+        lineHeight = 40.sp,
+        letterSpacing = 0.sp,
         color = TextPrimary
     ),
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp,
-        color = TextSecondary
-    ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+    // Screen titles
+    headlineMedium = TextStyle(
+        fontFamily = NunitoFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
+        fontSize = 20.sp,
+        lineHeight = 28.sp,
+        letterSpacing = 0.sp,
+        color = TextPrimary
+    ),
+    // Section headers, card titles
+    titleLarge = TextStyle(
+        fontFamily = NunitoFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.sp,
         color = TextPrimary
     ),
     titleMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
+        fontFamily = NunitoFamily,
         fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
         letterSpacing = 0.15.sp,
         color = TextPrimary
     ),
+    // Body text
+    bodyLarge = TextStyle(
+        fontFamily = NunitoFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 15.sp,
+        lineHeight = 22.sp,
+        letterSpacing = 0.15.sp,
+        color = TextPrimary
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = NunitoFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.25.sp,
+        color = TextSecondary
+    ),
+    bodySmall = TextStyle(
+        fontFamily = NunitoFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.4.sp,
+        color = TextSecondary
+    ),
+    // Captions, timestamps, hints
     labelSmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
+        fontFamily = NunitoFamily,
+        fontWeight = FontWeight.Light,
         fontSize = 11.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp,
+        color = TextMuted
+    ),
+    labelMedium = TextStyle(
+        fontFamily = NunitoFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp,
         color = TextSecondary
     ),
-    headlineMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.ExtraBold,
-        fontSize = 28.sp,
-        lineHeight = 36.sp,
-        letterSpacing = 0.sp,
+    labelLarge = TextStyle(
+        fontFamily = NunitoFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.1.sp,
         color = TextPrimary
     )
 )

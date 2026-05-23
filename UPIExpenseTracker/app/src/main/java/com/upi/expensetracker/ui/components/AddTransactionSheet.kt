@@ -19,28 +19,41 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.upi.expensetracker.data.CategoryEntity
-import com.upi.expensetracker.data.TransactionEntity
 import com.upi.expensetracker.ui.theme.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+/**
+ * Bottom sheet for manually adding a transaction when the user
+ * didn't receive an SMS or wants to record a cash/other expense.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditTransactionSheet(
-    transaction: TransactionEntity,
+fun AddTransactionSheet(
     categories: List<CategoryEntity>,
+    preselectedDate: String, // yyyy-MM-dd format
     onDismiss: () -> Unit,
-    onSave: (TransactionEntity) -> Unit
+    onAdd: (amount: Double, merchant: String, category: String, date: String, time: String, description: String, notes: String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
-    // Form States
-    var merchantName by remember { mutableStateOf(transaction.merchant) }
-    var description by remember { mutableStateOf(transaction.description) }
-    var selectedCategory by remember { mutableStateOf(transaction.category) }
-    var notes by remember { mutableStateOf(transaction.notes) }
-    var isSplit by remember { mutableStateOf(transaction.isSplit) }
-    var splitWith by remember { mutableStateOf(transaction.splitWith) }
-    var splitAmountStr by remember { mutableStateOf(transaction.splitAmount.toString()) }
-    var isSettled by remember { mutableStateOf(transaction.isSettled) }
+
+    // Form states
+    var amountText by remember { mutableStateOf("") }
+    var merchantName by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var selectedCategory by remember { mutableStateOf(if (categories.isNotEmpty()) categories[0].name else "Others") }
+    var selectedDate by remember { mutableStateOf(preselectedDate) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    // Current time as default
+    val currentTime = remember {
+        SimpleDateFormat("HH:mm", Locale.US).format(Date())
+    }
+
+    // Validation
+    val isValid = amountText.isNotBlank() && (amountText.toDoubleOrNull() ?: 0.0) > 0
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -63,27 +76,51 @@ fun EditTransactionSheet(
                 .navigationBarsPadding()
                 .padding(horizontal = 24.dp, vertical = 8.dp)
                 .imePadding(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            // Title
             Text(
-                text = "Edit Transaction",
+                text = "Add Transaction",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
             )
-            
+
             Text(
-                text = "Amount: ₹${String.format("%.2f", transaction.amount)} | Ref: ${transaction.refId}",
+                text = "Manually record an expense for $selectedDate",
                 fontSize = 13.sp,
                 color = TextMuted
             )
 
-            // Merchant Name Input (so user can fix "Unknown Payee")
+            // Amount Input (required)
+            OutlinedTextField(
+                value = amountText,
+                onValueChange = { amountText = it.filter { c -> c.isDigit() || c == '.' } },
+                label = { Text("Amount (₹) *") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = SurfaceElevated,
+                    unfocusedContainerColor = SurfaceElevated,
+                    focusedBorderColor = AccentBlue,
+                    unfocusedBorderColor = AccentBlueMid,
+                    focusedLabelColor = AccentBlue,
+                    unfocusedLabelColor = TextSecondary,
+                    focusedTextColor = TextPrimary,
+                    unfocusedTextColor = TextPrimary,
+                    cursorColor = AccentBlue
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            // Merchant / Payee Name
             OutlinedTextField(
                 value = merchantName,
                 onValueChange = { merchantName = it },
                 label = { Text("Merchant / Payee Name") },
                 modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
@@ -98,12 +135,13 @@ fun EditTransactionSheet(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Reason/Description Input
+            // Reason / Description
             OutlinedTextField(
                 value = description,
                 onValueChange = { description = it },
                 label = { Text("Reason / Description") },
                 modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
@@ -118,24 +156,43 @@ fun EditTransactionSheet(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Category Horizontal Selector
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Date selector row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Date", fontSize = 12.sp, color = TextMuted)
+                    Text(selectedDate, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                }
+                OutlinedButton(
+                    onClick = { showDatePicker = true },
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.dp, AccentBlueMid),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent)
+                ) {
+                    Text("Change Date", fontSize = 12.sp, color = AccentBlue)
+                }
+            }
+
+            // Category Selector
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    text = "Select Category",
+                    text = "Category",
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextPrimary
                 )
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(vertical = 4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(categories) { category ->
                         val isSelected = category.name == selectedCategory
                         val chipBg = if (isSelected) AccentBlueMid else Divider
                         val chipText = if (isSelected) TextPrimary else TextMuted
                         val chipBorder = if (isSelected) AccentBlue else AccentBlueMid
-                        
+
                         Box(
                             modifier = Modifier
                                 .background(chipBg, RoundedCornerShape(20.dp))
@@ -147,11 +204,13 @@ fun EditTransactionSheet(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                // Simple colored dot for category color
                                 Box(
                                     modifier = Modifier
                                         .size(8.dp)
-                                        .background(Color(android.graphics.Color.parseColor(category.color)), RoundedCornerShape(4.dp))
+                                        .background(
+                                            Color(android.graphics.Color.parseColor(category.color)),
+                                            RoundedCornerShape(4.dp)
+                                        )
                                 )
                                 Text(
                                     text = category.name,
@@ -165,12 +224,13 @@ fun EditTransactionSheet(
                 }
             }
 
-            // Notes Input
+            // Notes (optional)
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Add Notes") },
+                label = { Text("Notes (optional)") },
                 modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
@@ -185,125 +245,82 @@ fun EditTransactionSheet(
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Split Toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Split this expense?",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary
-                )
-                Switch(
-                    checked = isSplit,
-                    onCheckedChange = { isSplit = it },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = TextPrimary,
-                        checkedTrackColor = AccentBlue,
-                        uncheckedThumbColor = TextMuted,
-                        uncheckedTrackColor = SurfaceElevated
-                    )
-                )
-            }
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Split Inputs
-            if (isSplit) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    OutlinedTextField(
-                        value = splitWith,
-                        onValueChange = { splitWith = it },
-                        label = { Text("Split With") },
-                        modifier = Modifier.weight(1f),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = SurfaceElevated,
-                            unfocusedContainerColor = SurfaceElevated,
-                            focusedBorderColor = AccentBlue,
-                            unfocusedBorderColor = AccentBlueMid,
-                            focusedLabelColor = AccentBlue,
-                            unfocusedLabelColor = TextSecondary,
-                            cursorColor = AccentBlue
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = splitAmountStr,
-                        onValueChange = { splitAmountStr = it },
-                        label = { Text("Your Share (₹)") },
-                        modifier = Modifier.weight(1f),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = SurfaceElevated,
-                            unfocusedContainerColor = SurfaceElevated,
-                            focusedBorderColor = AccentBlue,
-                            unfocusedBorderColor = AccentBlueMid,
-                            focusedLabelColor = AccentBlue,
-                            unfocusedLabelColor = TextSecondary,
-                            cursorColor = AccentBlue
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Marked as Settled / Paid Back?",
-                        fontSize = 14.sp,
-                        color = TextSecondary
-                    )
-                    Checkbox(
-                        checked = isSettled,
-                        onCheckedChange = { isSettled = it ?: false },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = AccentBlue,
-                            uncheckedColor = TextMuted
-                        )
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Save Button
+            // Add Button
             Button(
                 onClick = {
-                    val updated = transaction.copy(
-                        merchant = merchantName.trim().ifEmpty { transaction.merchant },
-                        description = description,
-                        category = selectedCategory,
-                        notes = notes,
-                        isSplit = isSplit,
-                        splitWith = if (isSplit) splitWith else "",
-                        splitAmount = if (isSplit) (splitAmountStr.toDoubleOrNull() ?: 0.0) else 0.0,
-                        isSettled = if (isSplit) isSettled else false
-                    )
-                    onSave(updated)
+                    val amount = amountText.toDoubleOrNull() ?: 0.0
+                    if (amount > 0) {
+                        onAdd(
+                            amount,
+                            merchantName,
+                            selectedCategory,
+                            selectedDate,
+                            currentTime,
+                            description,
+                            notes
+                        )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
+                enabled = isValid,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentBlue,
+                    disabledContainerColor = SurfaceElevated
+                ),
                 shape = RoundedCornerShape(14.dp)
             ) {
                 Text(
-                    text = "Save Changes",
+                    text = "Add Expense",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                    color = if (isValid) TextPrimary else TextMuted
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+
+    // DatePickerDialog for changing date
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val millis = datePickerState.selectedDateMillis
+                    if (millis != null) {
+                        selectedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(millis))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK", color = AccentBlue, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("CANCEL", color = TextPrimary)
+                }
+            },
+            colors = DatePickerDefaults.colors(containerColor = Surface)
+        ) {
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    containerColor = Surface,
+                    titleContentColor = TextPrimary,
+                    headlineContentColor = TextPrimary,
+                    weekdayContentColor = TextMuted,
+                    dayContentColor = TextPrimary,
+                    selectedDayContainerColor = AccentBlue,
+                    todayContentColor = AccentBlue,
+                    todayDateBorderColor = AccentBlue
+                )
+            )
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.upi.expensetracker.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -111,7 +112,7 @@ fun TransactionsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(Background)
     ) {
         // Date Mode Toggle + Date Selector
         Column(
@@ -140,13 +141,13 @@ fun TransactionsScreen(
                     Icon(
                         imageVector = Icons.Default.DateRange,
                         contentDescription = "Date Range",
-                        tint = if (useDateRange) PrimaryPurple else TextSecondary,
+                        tint = if (useDateRange) AccentBlue else TextMuted,
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
                         text = "Range",
                         fontSize = 12.sp,
-                        color = if (useDateRange) PrimaryPurple else TextSecondary,
+                        color = if (useDateRange) AccentBlue else TextMuted,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.clickable { useDateRange = !useDateRange }
                     )
@@ -166,8 +167,8 @@ fun TransactionsScreen(
                         onClick = { showStartDatePicker = true },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (dateRangeStart.isNotEmpty()) PrimaryPurple else Color(0xFF2C2C2C)),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = CardBackground)
+                        border = BorderStroke(1.dp, if (dateRangeStart.isNotEmpty()) AccentBlue else Divider),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Surface)
                     ) {
                         Text(
                             text = if (dateRangeStart.isNotEmpty()) "From: $dateRangeStart" else "Start Date",
@@ -181,8 +182,8 @@ fun TransactionsScreen(
                         onClick = { showEndDatePicker = true },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, if (dateRangeEnd.isNotEmpty()) PrimaryPurple else Color(0xFF2C2C2C)),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = CardBackground)
+                        border = BorderStroke(1.dp, if (dateRangeEnd.isNotEmpty()) AccentBlue else Divider),
+                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Surface)
                     ) {
                         Text(
                             text = if (dateRangeEnd.isNotEmpty()) "To: $dateRangeEnd" else "End Date",
@@ -199,8 +200,8 @@ fun TransactionsScreen(
                 ) {
                     items(calendarList) { (dbDate, displayDate) ->
                         val isSelected = dbDate == selectedDate
-                        val boxBg = if (isSelected) PrimaryPurple else CardBackground
-                        val textColor = if (isSelected) TextPrimary else TextSecondary
+                        val boxBg = if (isSelected) AccentBlue else Surface
+                        val textColor = if (isSelected) TextPrimary else TextMuted
 
                         Box(
                             modifier = Modifier
@@ -251,8 +252,8 @@ fun TransactionsScreen(
                 .padding(horizontal = 20.dp),
             enabled = !isSyncing && !useDateRange,
             colors = ButtonDefaults.buttonColors(
-                containerColor = PrimaryPurple,
-                disabledContainerColor = Color(0xFF2C2C2C)
+                containerColor = AccentBlue,
+                disabledContainerColor = SurfaceElevated
             ),
             shape = RoundedCornerShape(12.dp),
             contentPadding = PaddingValues(vertical = 8.dp)
@@ -298,9 +299,9 @@ fun TransactionsScreen(
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = CardBackground,
-                    unfocusedContainerColor = CardBackground,
-                    focusedBorderColor = PrimaryPurple,
+                    focusedContainerColor = Surface,
+                    unfocusedContainerColor = Surface,
+                    focusedBorderColor = AccentBlue,
                     unfocusedBorderColor = Color.Transparent,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
@@ -321,15 +322,15 @@ fun TransactionsScreen(
                     singleLine = true,
                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextPrimary),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = CardBackground,
-                        unfocusedContainerColor = CardBackground,
-                        focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color(0xFF3A3A3A),
-                        focusedLabelColor = PrimaryPurple,
-                        unfocusedLabelColor = Color(0xFFAAAAAA),
+                        focusedContainerColor = SurfaceElevated,
+                        unfocusedContainerColor = SurfaceElevated,
+                        focusedBorderColor = AccentBlue,
+                        unfocusedBorderColor = AccentBlueMid,
+                        focusedLabelColor = AccentBlue,
+                        unfocusedLabelColor = TextSecondary,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        cursorColor = PrimaryPurple
+                        cursorColor = AccentBlue
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -341,15 +342,15 @@ fun TransactionsScreen(
                     singleLine = true,
                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextPrimary),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = CardBackground,
-                        unfocusedContainerColor = CardBackground,
-                        focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = Color(0xFF3A3A3A),
-                        focusedLabelColor = PrimaryPurple,
-                        unfocusedLabelColor = Color(0xFFAAAAAA),
+                        focusedContainerColor = SurfaceElevated,
+                        unfocusedContainerColor = SurfaceElevated,
+                        focusedBorderColor = AccentBlue,
+                        unfocusedBorderColor = AccentBlueMid,
+                        focusedLabelColor = AccentBlue,
+                        unfocusedLabelColor = TextSecondary,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        cursorColor = PrimaryPurple
+                        cursorColor = AccentBlue
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -366,9 +367,9 @@ fun TransactionsScreen(
                         onClick = { selectedCategoryFilter = "All" },
                         label = { Text("All", fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = PrimaryPurple,
-                            containerColor = CardBackground,
-                            labelColor = TextSecondary,
+                            selectedContainerColor = AccentBlue,
+                            containerColor = Surface,
+                            labelColor = TextMuted,
                             selectedLabelColor = TextPrimary
                         ),
                         border = null
@@ -381,9 +382,9 @@ fun TransactionsScreen(
                         onClick = { selectedCategoryFilter = cat.name },
                         label = { Text(cat.name, fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = PrimaryPurple,
-                            containerColor = CardBackground,
-                            labelColor = TextSecondary,
+                            selectedContainerColor = AccentBlue,
+                            containerColor = Surface,
+                            labelColor = TextMuted,
                             selectedLabelColor = TextPrimary
                         ),
                         border = null
@@ -400,7 +401,7 @@ fun TransactionsScreen(
                 Text(
                     text = "${filteredTransactions.size} found",
                     fontSize = 11.sp,
-                    color = TextSecondary
+                    color = TextMuted
                 )
 
                 Row(
@@ -414,7 +415,7 @@ fun TransactionsScreen(
                         Box(
                             modifier = Modifier
                                 .background(
-                                    if (isSelected) PrimaryPurple else Color.Transparent,
+                                    if (isSelected) AccentBlue else Color.Transparent,
                                     RoundedCornerShape(8.dp)
                                 )
                                 .clickable { sortBy = sortOption }
@@ -450,7 +451,7 @@ fun TransactionsScreen(
                     )
                     Text(
                         text = "No transactions found for this selection.",
-                        color = TextSecondary,
+                        color = TextMuted,
                         fontSize = 14.sp
                     )
                 }
