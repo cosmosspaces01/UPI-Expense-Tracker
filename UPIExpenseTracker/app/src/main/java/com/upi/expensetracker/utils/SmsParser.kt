@@ -212,7 +212,10 @@ object SmsParser {
             if (match != null) {
                 accountLast4 = match.groupValues[1]
                 break
-         // Step 6: Extract Reference ID
+            }
+        }
+
+        // Step 6: Extract Reference ID
         val refRegexes = listOf(
             Regex("""(?:ref|upi\s*ref|ref\s*no|rrn|reference)\s*[.:#\s]*\s*(\d{9,14})""", RegexOption.IGNORE_CASE),
             Regex("""(?:txn|transaction)\s*(?:id|no)?[.:#\s]*\s*([0-9A-Z]{8,14})""", RegexOption.IGNORE_CASE)
