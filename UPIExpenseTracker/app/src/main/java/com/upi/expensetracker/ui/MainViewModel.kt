@@ -11,6 +11,7 @@ import com.upi.expensetracker.data.TransactionEntity
 import com.upi.expensetracker.utils.SmsParser
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -23,6 +24,35 @@ class MainViewModel(
     private val categoryDao: CategoryDao,
     private val context: Context
 ) : ViewModel() {
+
+    init {
+        sanitizeExistingTransactions()
+    }
+
+    private fun sanitizeExistingTransactions() {
+        viewModelScope.launch {
+            try {
+                // Fetch the current transactions once to check for corrupted dates (e.g., year 0026 AD)
+                val txns = transactionDao.getAllTransactions().first()
+                txns.forEach { txn ->
+                    var updated = false
+                    var newDate = txn.date
+                    
+                    // If date starts with "00xx-", replace "00" with "20" (e.g. "0026-05-21" to "2026-05-21")
+                    if (txn.date.length == 10 && txn.date.startsWith("00")) {
+                        newDate = "20" + txn.date.substring(2)
+                        updated = true
+                    }
+                    
+                    if (updated) {
+                        transactionDao.updateTransaction(txn.copy(date = newDate))
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     // Fetch lists from Room
     val allTransactions: StateFlow<List<TransactionEntity>> = transactionDao.getAllTransactions()

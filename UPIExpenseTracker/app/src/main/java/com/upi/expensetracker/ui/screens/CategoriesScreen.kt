@@ -284,11 +284,11 @@ fun CategoriesScreen(
                     // Emoji Selection Block
                     Text(text = "Choose Icon/Emoji:", color = TextSecondary, fontSize = 13.sp)
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val chunks = presetEmojis.chunked(8)
+                        val chunks = presetEmojis.chunked(4)
                         chunks.forEach { chunk ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
                             ) {
                                 chunk.forEach { (iconId, emoji) ->
                                     val isSelected = selectedIcon == iconId
@@ -430,11 +430,11 @@ fun CategoriesScreen(
                     // Emoji Selection Block
                     Text(text = "Choose Icon/Emoji:", color = TextSecondary, fontSize = 13.sp)
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        val chunks = presetEmojis.chunked(8)
+                        val chunks = presetEmojis.chunked(4)
                         chunks.forEach { chunk ->
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
                             ) {
                                 chunk.forEach { (iconId, emoji) ->
                                     val isSelected = editCategoryIcon == iconId

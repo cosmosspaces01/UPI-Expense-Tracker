@@ -85,49 +85,40 @@ fun HomeScreen(
 
         // Today's Spent Hero Card — Arctic Blue
         item {
-            Box(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Surface, RoundedCornerShape(20.dp))
-                    .border(BorderStroke(1.dp, AccentBlueMid), RoundedCornerShape(20.dp))
+                    .border(BorderStroke(1.dp, AccentBlueMid), RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Surface)
             ) {
-                Column {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = "Today's spend",
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = TextMuted
-                        )
-                        val spend = todayTotal ?: 0.0
-                        Text(
-                            text = "₹${String.format("%,.2f", spend)}",
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextPrimary
-                        )
-                        val todayDateString = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-                        val todayTxnCount = transactions.filter { it.date == todayDateString }.size
-                        val txnText = if (todayTxnCount == 1) "1 transaction" else "$todayTxnCount transactions"
-                        Text(
-                            text = "$txnText tracked today",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Light,
-                            color = TextMuted
-                        )
-                    }
-                    // Accent blue line at bottom
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp)
-                            .padding(horizontal = 1.dp)
-                            .background(AccentBlue, RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Today's spend",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = TextMuted
+                    )
+                    val spend = todayTotal ?: 0.0
+                    Text(
+                        text = "₹${String.format("%,.2f", spend)}",
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    val todayDateString = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+                    val todayTxnCount = transactions.filter { it.date == todayDateString }.size
+                    val txnText = if (todayTxnCount == 1) "1 transaction" else "$todayTxnCount transactions"
+                    Text(
+                        text = "$txnText tracked today",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Light,
+                        color = TextMuted
                     )
                 }
             }

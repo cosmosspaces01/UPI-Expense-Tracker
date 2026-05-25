@@ -212,15 +212,12 @@ object SmsParser {
             if (match != null) {
                 accountLast4 = match.groupValues[1]
                 break
-            }
-        }
-
-        // Step 6: Extract Reference ID
+         // Step 6: Extract Reference ID
         val refRegexes = listOf(
             Regex("""(?:ref|upi\s*ref|ref\s*no|rrn|reference)\s*[.:#\s]*\s*(\d{9,14})""", RegexOption.IGNORE_CASE),
             Regex("""(?:txn|transaction)\s*(?:id|no)?[.:#\s]*\s*([0-9A-Z]{8,14})""", RegexOption.IGNORE_CASE)
         )
-        var refId = "TXN${System.currentTimeMillis()}"
+        var refId: String? = null
         for (regex in refRegexes) {
             val match = regex.find(body)
             if (match != null) {
@@ -228,16 +225,22 @@ object SmsParser {
                 break
             }
         }
+        if (refId == null) {
+            // Generate a stable, deterministic refId using SHA-256 of the SMS body and its stable timestamp.
+            // This prevents duplicate entries if sync is run multiple times.
+            val bodyHash = generateHash(body + fallbackDateMs).take(12).uppercase()
+            refId = "TXN$bodyHash"
+        }
 
         // Step 7: Extract and Format Date and Time from SMS Body
         var formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date(fallbackDateMs))
         var formattedTime = SimpleDateFormat("HH:mm", Locale.US).format(Date(fallbackDateMs))
 
-        // Date regex: matches patterns like 21-May-26, 21-05-2026, 21/05/26, 2026-05-21
+        // Date regex: matches patterns like 21-May-26, 21-05-2026, 21/05/26, 2026-05-21, and 21.05.26 (with dots)
         val dateRegexes = listOf(
-            Regex("""(\d{1,2}[-/]\d{1,2}[-/]\d{2,4})"""),
+            Regex("""(\d{1,2}[-./]\d{1,2}[-./]\d{2,4})"""),
             Regex("""(\d{1,2}\s*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*\d{2,4})""", RegexOption.IGNORE_CASE),
-            Regex("""(\d{4}[-/]\d{1,2}[-/]\d{1,2})""")
+            Regex("""(\d{4}[-./]\d{1,2}[-./]\d{1,2})""")
         )
 
         for (regex in dateRegexes) {
@@ -245,10 +248,13 @@ object SmsParser {
             if (match != null) {
                 val dateStr = match.groupValues[1]
                 try {
+                    // Added dot-separated formats to the list to support diverse SMS formats.
                     val formats = listOf(
-                        "dd-MM-yyyy", "dd/MM/yyyy", "dd-MM-yy", "dd/MM/yy",
+                        "dd-MM-yyyy", "dd/MM/yyyy", "dd.MM.yyyy",
+                        "dd-MM-yy", "dd/MM/yy", "dd.MM.yy",
                         "dd MMM yyyy", "dd MMM yy", "dd-MMM-yy", "dd-MMM-yyyy",
-                        "ddMMMyy", "ddMMMyyyy", "yyyy-MM-dd", "yyyy/MM/dd",
+                        "dd.MMM.yy", "dd.MMM.yyyy",
+                        "ddMMMyy", "ddMMMyyyy", "yyyy-MM-dd", "yyyy/MM/dd", "yyyy.MM.dd",
                         "dd MMM", "d MMM yyyy"
                     )
                     var parsedDate: Date? = null
@@ -256,17 +262,28 @@ object SmsParser {
                         try {
                             val sdf = SimpleDateFormat(fmt, Locale.US)
                             sdf.isLenient = false
-                            parsedDate = sdf.parse(dateStr)
-                            if (parsedDate != null) break
+                            val date = sdf.parse(dateStr)
+                            if (date != null) {
+                                // Validate that the parsed year falls within a sensible modern range (2000 to 2100).
+                                // This prevents SimpleDateFormat from parsing 2-digit years (like "26") into year 26 AD
+                                // under 4-digit year format patterns ("yyyy").
+                                val cal = Calendar.getInstance()
+                                cal.time = date
+                                val year = cal.get(Calendar.YEAR)
+                                if (year in 2000..2100) {
+                                    parsedDate = date
+                                    break
+                                }
+                            }
                         } catch (e: Exception) {
-                            // continue trying
+                            // continue trying next format
                         }
                     }
                     if (parsedDate != null) {
                         formattedDate = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(parsedDate)
                     }
                 } catch (e: Exception) {
-                    // Fallback to SMS timestamp date
+                    // Fallback to stable SMS timestamp date on parsing exception
                 }
                 break
             }

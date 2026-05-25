@@ -125,4 +125,43 @@ class SmsParserTest {
         val transaction = SmsParser.parseSMS(sms)
         assertNull(transaction)
     }
+
+    @Test
+    fun testDotSeparatedDateSms() {
+        val sms = "Alert: Rs. 1500.00 debited from A/c XX1234 on 21.05.26 to SWIGGY. Ref No 654321098765"
+        val transaction = SmsParser.parseSMS(sms)
+        assertNotNull(transaction)
+        assertEquals(1500.00, transaction!!.amount, 0.0)
+        assertEquals("Swiggy", transaction.merchant)
+        assertEquals("1234", transaction.accountLast4)
+        assertEquals("654321098765", transaction.refId)
+        assertEquals("2026-05-21", transaction.date)
+        assertEquals("Food & Dining", transaction.category)
+    }
+
+    @Test
+    fun testStableFallbackRefId() {
+        val smsNoRef = "Alert: Rs 500 debited for online transfer to OLA from A/c ending 7890."
+        val timestamp = 1782345600000L // stable mock timestamp
+        
+        // Execute multiple times
+        val txn1 = SmsParser.parseSMS(smsNoRef, timestamp)
+        val txn2 = SmsParser.parseSMS(smsNoRef, timestamp)
+        
+        assertNotNull(txn1)
+        assertNotNull(txn2)
+        // Verify they are identical
+        assertEquals(txn1!!.refId, txn2!!.refId)
+        assertEquals(txn1.id, txn2.id)
+        assertTrue(txn1.refId.startsWith("TXN"))
+    }
+
+    @Test
+    fun testTwoDigitYearCorrectParsing() {
+        // Enforce parsing 2-digit years correctly without medieval misinterpretation
+        val sms = "Alert: Rs. 1500.00 debited on 21-05-26 to SWIGGY. Ref No 654321098765"
+        val transaction = SmsParser.parseSMS(sms)
+        assertNotNull(transaction)
+        assertEquals("2026-05-21", transaction!!.date) // verified modern era
+    }
 }
