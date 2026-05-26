@@ -41,7 +41,7 @@ fun SpendBarChart(
         val chartHeight = height - paddingBottom
 
         if (dailySpends.isEmpty()) {
-            drawText(textMeasurer, "No data available", TextStyle(color = TextSecondary, fontSize = 14.sp), Offset(width / 2f - 60f, height / 2f - 20f))
+            drawText(textMeasurer, "No data available", topLeft = Offset(width / 2f - 60f, height / 2f - 20f), style = TextStyle(color = TextSecondary, fontSize = 14.sp))
             return@Canvas
         }
 
@@ -52,7 +52,7 @@ fun SpendBarChart(
         for (i in 0..gridLines) {
             val y = chartHeight - (chartHeight / gridLines) * i
             drawLine(Divider, Offset(paddingLeft, y), Offset(width, y), 1f)
-            drawText(textMeasurer, "₹${(maxSpend / gridLines * i).toInt()}", labelStyle, Offset(2f, y - 15f))
+            drawText(textMeasurer, "₹${(maxSpend / gridLines * i).toInt()}", topLeft = Offset(2f, y - 15f), style = labelStyle)
         }
 
         // Bars — single teal color, rounded tops
@@ -95,7 +95,7 @@ fun TrendLineChart(
         val chartHeight = height - paddingBottom
 
         if (monthlySpends.isEmpty()) {
-            drawText(textMeasurer, "No trend data", TextStyle(color = TextSecondary, fontSize = 14.sp), Offset(width / 2f - 40f, height / 2f - 20f))
+            drawText(textMeasurer, "No trend data", topLeft = Offset(width / 2f - 40f, height / 2f - 20f), style = TextStyle(color = TextSecondary, fontSize = 14.sp))
             return@Canvas
         }
 
@@ -106,7 +106,7 @@ fun TrendLineChart(
         for (i in 0..gridLines) {
             val y = chartHeight - (chartHeight / gridLines) * i
             drawLine(Divider, Offset(paddingLeft, y), Offset(width, y), 1f)
-            drawText(textMeasurer, "₹${(maxSpend / gridLines * i).toInt()}", labelStyle, Offset(2f, y - 15f))
+            drawText(textMeasurer, "₹${(maxSpend / gridLines * i).toInt()}", topLeft = Offset(2f, y - 15f), style = labelStyle)
         }
 
         val pointsCount = monthlySpends.size
@@ -148,7 +148,7 @@ fun TrendLineChart(
             points.forEachIndexed { i, p ->
                 drawCircle(AccentDim, 4.dp.toPx(), p)
                 drawCircle(Accent, 2.5.dp.toPx(), p)
-                drawText(textMeasurer, monthlySpends[i].first, labelStyle, Offset(p.x - 15f, chartHeight + 10f))
+                drawText(textMeasurer, monthlySpends[i].first, topLeft = Offset(p.x - 15f, chartHeight + 10f), style = labelStyle)
             }
         }
     }
