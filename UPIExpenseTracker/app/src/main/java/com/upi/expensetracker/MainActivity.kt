@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +20,10 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -103,20 +107,46 @@ fun MainAppLayout(viewModel: MainViewModel) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // FAB bounce animation
+    val fabScale by animateFloatAsState(
+        targetValue = if (currentRoute in listOf("home", "transactions")) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "fabScale"
+    )
+
     Scaffold(
         floatingActionButton = {
-            // Show FAB on Home and Transactions screens
+            // Show FAB on Home and Transactions screens with bounce animation
             if (currentRoute in listOf("home", "transactions")) {
                 FloatingActionButton(
                     onClick = { showAddTransaction = true },
-                    containerColor = PrimaryPurple,
-                    contentColor = TextPrimary,
-                    shape = RoundedCornerShape(16.dp)
+                    containerColor = Color.Transparent,
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .scale(fabScale)
+                        .size(56.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add Transaction"
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(PrimaryViolet, PrimaryPink)
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Transaction",
+                            tint = Color.White
+                        )
+                    }
                 }
             }
         },
@@ -125,7 +155,7 @@ fun MainAppLayout(viewModel: MainViewModel) {
             val showBottomBar = currentRoute in listOf("home", "transactions", "analytics", "settings")
             if (showBottomBar) {
                 Column {
-                    // Top border line instead of shadow
+                    // Top border line
                     HorizontalDivider(
                         thickness = 0.5.dp,
                         color = Divider
@@ -148,11 +178,11 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
                         label = { Text("Home", fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AccentBlue,
-                            selectedTextColor = AccentBlue,
+                            selectedIconColor = PrimaryViolet,
+                            selectedTextColor = PrimaryViolet,
                             unselectedIconColor = TextMuted,
                             unselectedTextColor = TextMuted,
-                            indicatorColor = SurfaceElevated
+                            indicatorColor = PrimaryViolet.copy(alpha = 0.15f)
                         )
                     )
                     
@@ -169,11 +199,11 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         icon = { Icon(Icons.Default.List, contentDescription = "Transactions") },
                         label = { Text("Transactions", fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AccentBlue,
-                            selectedTextColor = AccentBlue,
+                            selectedIconColor = PrimaryPink,
+                            selectedTextColor = PrimaryPink,
                             unselectedIconColor = TextMuted,
                             unselectedTextColor = TextMuted,
-                            indicatorColor = SurfaceElevated
+                            indicatorColor = PrimaryPink.copy(alpha = 0.15f)
                         )
                     )
 
@@ -190,11 +220,11 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         icon = { Icon(Icons.Default.Menu, contentDescription = "Analytics") },
                         label = { Text("Analytics", fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AccentBlue,
-                            selectedTextColor = AccentBlue,
+                            selectedIconColor = AccentAmber,
+                            selectedTextColor = AccentAmber,
                             unselectedIconColor = TextMuted,
                             unselectedTextColor = TextMuted,
-                            indicatorColor = SurfaceElevated
+                            indicatorColor = AccentAmber.copy(alpha = 0.15f)
                         )
                     )
 
@@ -211,11 +241,11 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                         label = { Text("Settings", fontSize = 11.sp) },
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AccentBlue,
-                            selectedTextColor = AccentBlue,
+                            selectedIconColor = AccentMint,
+                            selectedTextColor = AccentMint,
                             unselectedIconColor = TextMuted,
                             unselectedTextColor = TextMuted,
-                            indicatorColor = SurfaceElevated
+                            indicatorColor = AccentMint.copy(alpha = 0.15f)
                         )
                     )
                     }
@@ -241,23 +271,50 @@ fun MainAppLayout(viewModel: MainViewModel) {
                 )
             }
             composable("analytics") {
-                // Include navigation triggers to detailed budget, categories, and insights views
+                // Gradient-styled sub-navigation chip row
                 Column(modifier = Modifier.fillMaxSize()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(DarkBackground)
-                            .padding(horizontal = 20.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .background(Background)
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        TextButton(onClick = { navController.navigate("insights") }) {
-                            Text("💡 Insights", color = BottomNavSelected, fontWeight = FontWeight.Bold)
+                        // Insights chip
+                        OutlinedButton(
+                            onClick = { navController.navigate("insights") },
+                            shape = RoundedCornerShape(20.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                brush = Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink))
+                            ),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Text("💡 Insights", color = PrimaryViolet, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
-                        TextButton(onClick = { navController.navigate("budgets") }) {
-                            Text("🎯 Budgets", color = BottomNavSelected, fontWeight = FontWeight.Bold)
+                        // Budgets chip
+                        OutlinedButton(
+                            onClick = { navController.navigate("budgets") },
+                            shape = RoundedCornerShape(20.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                brush = Brush.horizontalGradient(listOf(AccentAmber, AccentCoral))
+                            ),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Text("🎯 Budgets", color = AccentAmber, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
-                        TextButton(onClick = { navController.navigate("categories") }) {
-                            Text("🏷️ Categories", color = BottomNavSelected, fontWeight = FontWeight.Bold)
+                        // Categories chip
+                        OutlinedButton(
+                            onClick = { navController.navigate("categories") },
+                            shape = RoundedCornerShape(20.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                brush = Brush.horizontalGradient(listOf(AccentMint, AccentSky))
+                            ),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Text("🏷️ Categories", color = AccentMint, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                         }
                     }
                     AnalyticsScreen(viewModel = viewModel)

@@ -18,9 +18,13 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.upi.expensetracker.ui.theme.AccentBlue
-import com.upi.expensetracker.ui.theme.AccentBlueMid
 import com.upi.expensetracker.ui.theme.Divider
+import com.upi.expensetracker.ui.theme.GradientEnd
+import com.upi.expensetracker.ui.theme.GradientMid
+import com.upi.expensetracker.ui.theme.GradientStart
+import com.upi.expensetracker.ui.theme.PrimaryMuted
+import com.upi.expensetracker.ui.theme.PrimaryPink
+import com.upi.expensetracker.ui.theme.PrimaryViolet
 import com.upi.expensetracker.ui.theme.TextMuted
 import com.upi.expensetracker.ui.theme.TextSecondary
 import kotlin.math.max
@@ -73,7 +77,7 @@ fun SpendBarChart(
             )
         }
 
-        // Draw bars
+        // Draw bars with multi-color gradient (violet → coral)
         val barCount = dailySpends.size
         val spacing = chartWidth / barCount
         val barWidth = spacing * 0.6f
@@ -85,9 +89,9 @@ fun SpendBarChart(
             val y = chartHeight - barHeight
 
             if (spend > 0) {
-                // Gradient for bars — Arctic Blue accent
+                // Multi-color gradient for bars — Violet → Pink → Coral
                 val brush = Brush.verticalGradient(
-                    colors = listOf(AccentBlue, AccentBlueMid),
+                    colors = listOf(GradientStart, GradientMid, GradientEnd),
                     startY = y.toFloat(),
                     endY = chartHeight
                 )
@@ -96,7 +100,7 @@ fun SpendBarChart(
                     brush = brush,
                     topLeft = Offset(x, y.toFloat()),
                     size = Size(barWidth, barHeight.toFloat()),
-                    cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
+                    cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx())
                 )
             }
         }
@@ -158,7 +162,7 @@ fun TrendLineChart(
             Offset(x, y.toFloat())
         }
 
-        // Draw background gradient fill under line path
+        // Draw background gradient fill under line path (violet → transparent)
         if (points.isNotEmpty()) {
             val fillPath = Path().apply {
                 moveTo(points.first().x, chartHeight)
@@ -180,13 +184,17 @@ fun TrendLineChart(
             drawPath(
                 path = fillPath,
                 brush = Brush.verticalGradient(
-                    colors = listOf(AccentBlue.copy(alpha = 0.4f), Color.Transparent),
+                    colors = listOf(
+                        PrimaryViolet.copy(alpha = 0.4f),
+                        PrimaryPink.copy(alpha = 0.1f),
+                        Color.Transparent
+                    ),
                     startY = 0f,
                     endY = chartHeight
                 )
             )
 
-            // Draw line path
+            // Draw gradient stroke path
             val strokePath = Path().apply {
                 moveTo(points.first().x, points.first().y)
                 for (i in 1 until points.size) {
@@ -199,21 +207,31 @@ fun TrendLineChart(
 
             drawPath(
                 path = strokePath,
-                color = AccentBlue,
-                style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
+                brush = Brush.horizontalGradient(
+                    colors = listOf(PrimaryViolet, PrimaryPink, GradientEnd)
+                ),
+                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
             )
 
-            // Draw points and labels
+            // Draw points with glow rings
             for (i in points.indices) {
                 val p = points[i]
+                // Outer glow ring
                 drawCircle(
-                    color = AccentBlueMid,
+                    color = PrimaryViolet.copy(alpha = 0.2f),
+                    radius = 6.dp.toPx(),
+                    center = p
+                )
+                // Middle ring
+                drawCircle(
+                    color = PrimaryMuted,
                     radius = 4.dp.toPx(),
                     center = p
                 )
+                // Inner dot
                 drawCircle(
-                    color = AccentBlue,
-                    radius = 2.dp.toPx(),
+                    color = PrimaryPink,
+                    radius = 2.5.dp.toPx(),
                     center = p
                 )
 

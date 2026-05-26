@@ -21,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -76,19 +77,19 @@ fun CategoriesScreen(
 
     // Create Inputs
     var newCategoryName by remember { mutableStateOf("") }
-    var selectedColor by remember { mutableStateOf("#6C63FF") }
+    var selectedColor by remember { mutableStateOf("#7C5CFC") }
     var selectedIcon by remember { mutableStateOf("restaurant") }
     var newCategoryBudget by remember { mutableStateOf("") }
 
     // Edit Inputs
     var editCategoryName by remember { mutableStateOf("") }
-    var editCategoryColor by remember { mutableStateOf("#6C63FF") }
+    var editCategoryColor by remember { mutableStateOf("#7C5CFC") }
     var editCategoryIcon by remember { mutableStateOf("restaurant") }
     var editCategoryBudget by remember { mutableStateOf("") }
 
     val presetColors = listOf(
-        "#6C63FF", "#0984E3", "#FF9F43", "#E84393", "#00B894", 
-        "#FDCB6E", "#D63031", "#E17055", "#2ECC71", "#636E72"
+        "#7C5CFC", "#FF6B9D", "#FFB84D", "#4ECBA0", "#5ED4F5",
+        "#FF6B6B", "#E84393", "#2ECC71", "#0984E3", "#636E72"
     )
 
     val presetEmojis = listOf(
@@ -113,17 +114,17 @@ fun CategoriesScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(Background)
     ) {
         // App Bar
         TopAppBar(
-            title = { Text("Manage Categories", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+            title = { Text("🏷️ Manage Categories", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextPrimary)
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Background)
         )
 
         LazyVerticalGrid(
@@ -135,15 +136,20 @@ fun CategoriesScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            // "Add Category" Card
+            // "Add Category" Card — gradient border
             item {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(115.dp)
+                        .height(120.dp)
+                        .border(
+                            width = 1.5.dp,
+                            brush = Brush.linearGradient(listOf(PrimaryViolet, PrimaryPink)),
+                            shape = RoundedCornerShape(18.dp)
+                        )
                         .clickable { showCreateDialog = true },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = AccentBlueMid)
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Surface)
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -153,13 +159,13 @@ fun CategoriesScreen(
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Add",
-                            tint = PrimaryPurple,
+                            tint = PrimaryViolet,
                             modifier = Modifier.size(32.dp)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Add Category",
-                            color = TextPrimary,
+                            color = PrimaryViolet,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
@@ -167,12 +173,19 @@ fun CategoriesScreen(
                 }
             }
 
-            // Category list elements
+            // Category list elements — color-tinted backgrounds
             items(categories) { category ->
+                val catColor = try {
+                    Color(android.graphics.Color.parseColor(category.color))
+                } catch (e: Exception) {
+                    PrimaryViolet
+                }
+                val emoji = getCategoryEmoji(category.icon)
+
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(115.dp)
+                        .height(120.dp)
                         .combinedClickable(
                             onClick = {
                                 selectedCategoryForEdit = category
@@ -185,54 +198,73 @@ fun CategoriesScreen(
                                 selectedCategoryForDelete = category
                             }
                         ),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Surface)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.SpaceBetween,
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        // Colored Circle Dot + Icon Emoji Side by Side
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = getCategoryEmoji(category.icon),
-                                fontSize = 24.sp
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .size(12.dp)
-                                    .background(
-                                        Color(android.graphics.Color.parseColor(category.color)),
-                                        RoundedCornerShape(6.dp)
+                    // Subtle category-color gradient tint at top
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        // Color tint overlay
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(40.dp)
+                                .background(
+                                    brush = Brush.verticalGradient(
+                                        colors = listOf(
+                                            catColor.copy(alpha = 0.12f),
+                                            Color.Transparent
+                                        )
                                     )
-                            )
-                        }
-                        
-                        Column {
-                            Text(
-                                text = category.name,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary,
-                                fontSize = 14.sp
-                            )
-                            val budgetText = if (category.budget != null) {
-                                "Limit: ₹${category.budget.toInt()}/m"
-                            } else {
-                                "No budget set"
+                                )
+                        )
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.SpaceBetween,
+                            horizontalAlignment = Alignment.Start
+                        ) {
+                            // Emoji + Color dot
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = emoji,
+                                    fontSize = 28.sp
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(14.dp)
+                                        .background(catColor, RoundedCornerShape(7.dp))
+                                        .border(
+                                            width = 1.dp,
+                                            color = catColor.copy(alpha = 0.5f),
+                                            shape = RoundedCornerShape(7.dp)
+                                        )
+                                )
                             }
-                            Text(
-                                text = budgetText,
-                                fontSize = 11.sp,
-                                color = TextSecondary,
-                                modifier = Modifier.padding(top = 2.dp)
-                            )
+                            
+                            Column {
+                                Text(
+                                    text = category.name,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary,
+                                    fontSize = 14.sp
+                                )
+                                val budgetText = if (category.budget != null) {
+                                    "Limit: ₹${category.budget.toInt()}/m"
+                                } else {
+                                    "No budget set"
+                                }
+                                Text(
+                                    text = budgetText,
+                                    fontSize = 11.sp,
+                                    color = TextSecondary,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -244,7 +276,7 @@ fun CategoriesScreen(
     if (showCreateDialog) {
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
-            title = { Text(text = "New Category", color = TextPrimary) },
+            title = { Text(text = "✨ New Category", color = TextPrimary) },
             text = {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -256,8 +288,8 @@ fun CategoriesScreen(
                         label = { Text("Category Name") },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = AccentBlueMid,
+                            focusedBorderColor = PrimaryViolet,
+                            unfocusedBorderColor = PrimaryMuted,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -272,8 +304,8 @@ fun CategoriesScreen(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = AccentBlueMid,
+                            focusedBorderColor = PrimaryViolet,
+                            unfocusedBorderColor = PrimaryMuted,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -294,20 +326,20 @@ fun CategoriesScreen(
                                     val isSelected = selectedIcon == iconId
                                     Box(
                                         modifier = Modifier
-                                            .size(36.dp)
+                                            .size(40.dp)
                                             .background(
-                                                if (isSelected) PrimaryPurple.copy(alpha = 0.2f) else Color.Transparent,
-                                                RoundedCornerShape(8.dp)
+                                                if (isSelected) PrimaryViolet.copy(alpha = 0.2f) else Color.Transparent,
+                                                RoundedCornerShape(10.dp)
                                             )
                                             .border(
                                                 width = if (isSelected) 2.dp else 1.dp,
-                                                color = if (isSelected) PrimaryPurple else AccentBlueMid,
-                                                shape = RoundedCornerShape(8.dp)
+                                                color = if (isSelected) PrimaryViolet else PrimaryMuted,
+                                                shape = RoundedCornerShape(10.dp)
                                             )
                                             .clickable { selectedIcon = iconId },
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(text = emoji, fontSize = 18.sp)
+                                        Text(text = emoji, fontSize = 20.sp)
                                     }
                                 }
                             }
@@ -327,16 +359,16 @@ fun CategoriesScreen(
                                     val isSelected = colorHex == selectedColor
                                     Box(
                                         modifier = Modifier
-                                            .size(32.dp)
+                                            .size(36.dp)
                                             .background(
                                                 Color(android.graphics.Color.parseColor(colorHex)),
-                                                RoundedCornerShape(16.dp)
+                                                RoundedCornerShape(18.dp)
                                             )
                                             .clickable { selectedColor = colorHex }
                                             .border(
                                                 width = if (isSelected) 3.dp else 0.dp,
                                                 color = if (isSelected) TextPrimary else Color.Transparent,
-                                                shape = RoundedCornerShape(16.dp)
+                                                shape = RoundedCornerShape(18.dp)
                                             )
                                     )
                                 }
@@ -357,7 +389,7 @@ fun CategoriesScreen(
                                 budget = budgetVal
                             )
                             newCategoryName = ""
-                            selectedColor = "#6C63FF"
+                            selectedColor = "#7C5CFC"
                             selectedIcon = "restaurant"
                             newCategoryBudget = ""
                             showCreateDialog = false
@@ -367,13 +399,13 @@ fun CategoriesScreen(
                         }
                     }
                 ) {
-                    Text(text = "CREATE", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                    Text(text = "CREATE", color = PrimaryViolet, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { 
                     newCategoryName = ""
-                    selectedColor = "#6C63FF"
+                    selectedColor = "#7C5CFC"
                     selectedIcon = "restaurant"
                     newCategoryBudget = ""
                     showCreateDialog = false 
@@ -381,7 +413,7 @@ fun CategoriesScreen(
                     Text(text = "CANCEL", color = TextPrimary)
                 }
             },
-            containerColor = CardBackground
+            containerColor = Surface
         )
     }
 
@@ -390,7 +422,7 @@ fun CategoriesScreen(
         val cat = selectedCategoryForEdit!!
         AlertDialog(
             onDismissRequest = { selectedCategoryForEdit = null },
-            title = { Text(text = "Edit Category", color = TextPrimary) },
+            title = { Text(text = "✏️ Edit Category", color = TextPrimary) },
             text = {
                 Column(
                     modifier = Modifier.verticalScroll(rememberScrollState()),
@@ -402,8 +434,8 @@ fun CategoriesScreen(
                         label = { Text("Category Name") },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = AccentBlueMid,
+                            focusedBorderColor = PrimaryViolet,
+                            unfocusedBorderColor = PrimaryMuted,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -418,8 +450,8 @@ fun CategoriesScreen(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = AccentBlueMid,
+                            focusedBorderColor = PrimaryViolet,
+                            unfocusedBorderColor = PrimaryMuted,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -440,20 +472,20 @@ fun CategoriesScreen(
                                     val isSelected = editCategoryIcon == iconId
                                     Box(
                                         modifier = Modifier
-                                            .size(36.dp)
+                                            .size(40.dp)
                                             .background(
-                                                if (isSelected) PrimaryPurple.copy(alpha = 0.2f) else Color.Transparent,
-                                                RoundedCornerShape(8.dp)
+                                                if (isSelected) PrimaryViolet.copy(alpha = 0.2f) else Color.Transparent,
+                                                RoundedCornerShape(10.dp)
                                             )
                                             .border(
                                                 width = if (isSelected) 2.dp else 1.dp,
-                                                color = if (isSelected) PrimaryPurple else AccentBlueMid,
-                                                shape = RoundedCornerShape(8.dp)
+                                                color = if (isSelected) PrimaryViolet else PrimaryMuted,
+                                                shape = RoundedCornerShape(10.dp)
                                             )
                                             .clickable { editCategoryIcon = iconId },
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Text(text = emoji, fontSize = 18.sp)
+                                        Text(text = emoji, fontSize = 20.sp)
                                     }
                                 }
                             }
@@ -473,16 +505,16 @@ fun CategoriesScreen(
                                     val isSelected = colorHex == editCategoryColor
                                     Box(
                                         modifier = Modifier
-                                            .size(32.dp)
+                                            .size(36.dp)
                                             .background(
                                                 Color(android.graphics.Color.parseColor(colorHex)),
-                                                RoundedCornerShape(16.dp)
+                                                RoundedCornerShape(18.dp)
                                             )
                                             .clickable { editCategoryColor = colorHex }
                                             .border(
                                                 width = if (isSelected) 3.dp else 0.dp,
                                                 color = if (isSelected) TextPrimary else Color.Transparent,
-                                                shape = RoundedCornerShape(16.dp)
+                                                shape = RoundedCornerShape(18.dp)
                                             )
                                     )
                                 }
@@ -492,14 +524,14 @@ fun CategoriesScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
                     
-                    // Delete Button inside Edit Dialog for premium convenience
+                    // Delete Button inside Edit Dialog
                     Button(
                         onClick = {
                             selectedCategoryForDelete = cat
                             selectedCategoryForEdit = null
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = WarningRed.copy(alpha = 0.15f), contentColor = WarningRed),
+                        colors = ButtonDefaults.buttonColors(containerColor = DebitRed.copy(alpha = 0.15f), contentColor = DebitRed),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Delete Category", fontWeight = FontWeight.Bold)
@@ -525,7 +557,7 @@ fun CategoriesScreen(
                         }
                     }
                 ) {
-                    Text(text = "SAVE", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                    Text(text = "SAVE", color = PrimaryViolet, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -533,7 +565,7 @@ fun CategoriesScreen(
                     Text(text = "CANCEL", color = TextPrimary)
                 }
             },
-            containerColor = CardBackground
+            containerColor = Surface
         )
     }
 
@@ -552,7 +584,7 @@ fun CategoriesScreen(
                         Toast.makeText(context, "Category deleted.", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text(text = "DELETE", color = WarningRed, fontWeight = FontWeight.Bold)
+                    Text(text = "DELETE", color = DebitRed, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -560,7 +592,7 @@ fun CategoriesScreen(
                     Text(text = "CANCEL", color = TextPrimary)
                 }
             },
-            containerColor = CardBackground,
+            containerColor = Surface,
             titleContentColor = TextPrimary,
             textContentColor = TextSecondary
         )

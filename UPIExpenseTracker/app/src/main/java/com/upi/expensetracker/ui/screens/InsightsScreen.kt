@@ -1,6 +1,7 @@
 package com.upi.expensetracker.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,6 +37,9 @@ fun InsightsScreen(
 ) {
     val allTransactions by viewModel.allTransactions.collectAsState()
     val recurringTxns by viewModel.recurringTransactions.collectAsState()
+
+    // Rotating accent colors for insight cards
+    val insightColors = listOf(PrimaryViolet, PrimaryPink, AccentAmber, AccentMint, AccentSky)
 
     // 1. Calculate 6-month trend
     val trendData = remember(allTransactions) {
@@ -69,7 +74,6 @@ fun InsightsScreen(
             val daySpends = monthTxns.groupBy { it.date }.mapValues { it.value.sumOf { t -> t.amount } }
             val maxDayEntry = daySpends.maxByOrNull { it.value }
             if (maxDayEntry != null) {
-                // Format date for insight e.g. 14 Jun
                 try {
                     val dateObj = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(maxDayEntry.key)
                     val formatted = SimpleDateFormat("dd MMM", Locale.US).format(dateObj!!)
@@ -87,7 +91,7 @@ fun InsightsScreen(
             }
         }
 
-        // Insight C: Unusual spending detection (any transaction 3x greater than category average)
+        // Insight C: Unusual spending detection
         if (allTransactions.size > 5) {
             val catAvgs = allTransactions.groupBy { it.category }.mapValues { it.value.map { t -> t.amount }.average() }
             val unusualTxn = allTransactions.find { t ->
@@ -100,10 +104,8 @@ fun InsightsScreen(
         }
 
         // Insight D: Week-over-week comparison per category
-        // Compare this week (Mon-Sun) vs last week for each category
         try {
             val thisWeekCal = Calendar.getInstance()
-            // Set to start of this week (Monday)
             thisWeekCal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
             val thisWeekStart = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(thisWeekCal.time)
 
@@ -122,7 +124,6 @@ fun InsightsScreen(
                 val thisWeekByCategory = thisWeekTxns.groupBy { it.category }.mapValues { it.value.sumOf { t -> t.amount } }
                 val lastWeekByCategory = lastWeekTxns.groupBy { it.category }.mapValues { it.value.sumOf { t -> t.amount } }
 
-                // Find the category with the biggest increase
                 var biggestIncreaseCat: String? = null
                 var biggestIncreasePct = 0.0
                 for ((cat, thisWeekTotal) in thisWeekByCategory) {
@@ -153,7 +154,6 @@ fun InsightsScreen(
 
     // 3. Subscriptions aggregation
     val subscriptionsList = remember(recurringTxns) {
-        // Group by merchant to show unique subscriptions
         recurringTxns.groupBy { it.merchant }.map { (merchant, txns) ->
             val lastTxn = txns.first()
             SubscriptionItem(
@@ -167,17 +167,17 @@ fun InsightsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(Background)
     ) {
         // App Bar
         TopAppBar(
-            title = { Text("Insights & Trends", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+            title = { Text("💡 Insights & Trends", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextPrimary)
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Background)
         )
 
         LazyColumn(
@@ -188,10 +188,10 @@ fun InsightsScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            // Insights Carousel Section
+            // Insights Carousel Section with colored left borders
             item {
                 Text(
-                    text = "Weekly Highlights",
+                    text = "✨ Weekly Highlights",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
@@ -202,27 +202,43 @@ fun InsightsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(insights) { insightText ->
+                    items(insights.size) { index ->
+                        val insightText = insights[index]
+                        val accentColor = insightColors[index % insightColors.size]
+
                         Card(
                             modifier = Modifier
                                 .width(280.dp)
-                                .height(100.dp),
+                                .height(110.dp),
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = CardBackground)
+                            colors = CardDefaults.cardColors(containerColor = Surface)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = insightText,
-                                    fontSize = 13.sp,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Medium,
-                                    lineHeight = 18.sp
+                            Row(modifier = Modifier.fillMaxSize()) {
+                                // Colorful left accent border
+                                Box(
+                                    modifier = Modifier
+                                        .width(4.dp)
+                                        .fillMaxHeight()
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                listOf(accentColor, accentColor.copy(alpha = 0.3f))
+                                            )
+                                        )
                                 )
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = insightText,
+                                        fontSize = 13.sp,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.Medium,
+                                        lineHeight = 18.sp
+                                    )
+                                }
                             }
                         }
                     }
@@ -234,11 +250,11 @@ fun InsightsScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                    colors = CardDefaults.cardColors(containerColor = Surface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "6-Month Spending Trend",
+                            text = "📈 6-Month Spending Trend",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary,
@@ -252,7 +268,7 @@ fun InsightsScreen(
             // Subscriptions List Section
             item {
                 Text(
-                    text = "Your Subscriptions",
+                    text = "🔄 Your Subscriptions",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
@@ -265,7 +281,7 @@ fun InsightsScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = CardBackground)
+                        colors = CardDefaults.cardColors(containerColor = Surface)
                     ) {
                         Row(
                             modifier = Modifier
@@ -274,12 +290,20 @@ fun InsightsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Icon(Icons.Default.Info, contentDescription = "Info", tint = PrimaryPurple)
-                            Text(
-                                text = "No recurring payments detected yet.",
-                                fontSize = 12.sp,
-                                color = TextSecondary
-                            )
+                            Text(text = "🎵", fontSize = 24.sp)
+                            Column {
+                                Text(
+                                    text = "No recurring payments detected yet.",
+                                    fontSize = 13.sp,
+                                    color = TextSecondary
+                                )
+                                Text(
+                                    text = "Sync more transactions to auto-detect subscriptions.",
+                                    fontSize = 11.sp,
+                                    color = TextMuted,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -288,7 +312,12 @@ fun InsightsScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(CardBackground, RoundedCornerShape(16.dp))
+                            .background(Surface, RoundedCornerShape(16.dp))
+                            .border(
+                                width = 0.5.dp,
+                                color = PrimaryViolet.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(16.dp)
+                            )
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -315,19 +344,24 @@ fun InsightsScreen(
                             Text(
                                 text = "₹${String.format("%.2f", sub.cost)}/m",
                                 fontWeight = FontWeight.Bold,
-                                color = WarningRed,
+                                color = AccentAmber,
                                 fontSize = 14.sp
                             )
                             
                             Box(
                                 modifier = Modifier
-                                    .background(PrimaryPurple.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            listOf(PrimaryViolet.copy(alpha = 0.2f), PrimaryPink.copy(alpha = 0.1f))
+                                        ),
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
                                 Text(
-                                    text = "Subscription",
+                                    text = "📅 Recurring",
                                     fontSize = 9.sp,
-                                    color = PrimaryPurple,
+                                    color = PrimaryViolet,
                                     fontWeight = FontWeight.Bold
                                 )
                             }

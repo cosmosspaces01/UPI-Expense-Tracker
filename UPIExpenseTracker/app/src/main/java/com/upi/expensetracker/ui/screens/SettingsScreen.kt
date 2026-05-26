@@ -2,6 +2,7 @@ package com.upi.expensetracker.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -40,30 +42,36 @@ fun SettingsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(Background)
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         Text(
-            text = "Settings",
+            text = "⚙️ Settings",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
             color = TextPrimary
         )
 
-        // Profile Section
+        // Profile Section with gradient border
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(listOf(PrimaryViolet.copy(alpha = 0.3f), PrimaryPink.copy(alpha = 0.1f))),
+                    shape = RoundedCornerShape(16.dp)
+                ),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground)
+            colors = CardDefaults.cardColors(containerColor = Surface)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Profile Configuration",
+                    text = "👤 Profile Configuration",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
@@ -79,9 +87,9 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryPurple,
-                        unfocusedBorderColor = AccentBlueMid,
-                        focusedLabelColor = PrimaryPurple
+                        focusedBorderColor = PrimaryViolet,
+                        unfocusedBorderColor = PrimaryMuted,
+                        focusedLabelColor = PrimaryViolet
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -90,9 +98,15 @@ fun SettingsScreen(
 
         // Preferences Section (App Lock)
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(listOf(PrimaryViolet.copy(alpha = 0.3f), PrimaryPink.copy(alpha = 0.1f))),
+                    shape = RoundedCornerShape(16.dp)
+                ),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground)
+            colors = CardDefaults.cardColors(containerColor = Surface)
         ) {
             Row(
                 modifier = Modifier
@@ -103,7 +117,7 @@ fun SettingsScreen(
             ) {
                 Column {
                     Text(
-                        text = "App Lock Protection",
+                        text = "🔒 App Lock Protection",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
@@ -124,30 +138,36 @@ fun SettingsScreen(
                     },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = TextPrimary,
-                        checkedTrackColor = PrimaryPurple
+                        checkedTrackColor = PrimaryViolet
                     )
                 )
             }
         }
 
-        // Export/Backup data Section
+        // Export/Backup data Section — gradient buttons
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(listOf(PrimaryViolet.copy(alpha = 0.3f), PrimaryPink.copy(alpha = 0.1f))),
+                    shape = RoundedCornerShape(16.dp)
+                ),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground)
+            colors = CardDefaults.cardColors(containerColor = Surface)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Text(
-                    text = "Backup & Exporters",
+                    text = "📤 Backup & Export",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
 
-                // CSV Export Button
+                // CSV Export Button — gradient
                 Button(
                     onClick = {
                         if (allTransactions.isEmpty()) {
@@ -157,21 +177,32 @@ fun SettingsScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
-                    shape = RoundedCornerShape(12.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues()
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink)),
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Share, contentDescription = "Share CSV", tint = TextPrimary)
-                        Text(text = "Export Current Transactions (CSV)", fontWeight = FontWeight.Bold)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = "Share CSV", tint = Color.White)
+                            Text(text = "Export Transactions (CSV)", fontWeight = FontWeight.Bold, color = Color.White)
+                        }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-                // PDF Export Button
+                // PDF Export Button — gradient
                 Button(
                     onClick = {
                         if (allTransactions.isEmpty()) {
@@ -181,15 +212,26 @@ fun SettingsScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
-                    shape = RoundedCornerShape(12.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                    shape = RoundedCornerShape(12.dp),
+                    contentPadding = PaddingValues()
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.horizontalGradient(listOf(PrimaryViolet, AccentAmber)),
+                                shape = RoundedCornerShape(12.dp)
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Share, contentDescription = "Share PDF", tint = TextPrimary)
-                        Text(text = "Export Current Transactions (PDF)", fontWeight = FontWeight.Bold)
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = "Share PDF", tint = Color.White)
+                            Text(text = "Export Transactions (PDF)", fontWeight = FontWeight.Bold, color = Color.White)
+                        }
                     }
                 }
             }
@@ -197,16 +239,22 @@ fun SettingsScreen(
 
         // Testing Simulator Actions Section
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(listOf(AccentSky.copy(alpha = 0.3f), AccentMint.copy(alpha = 0.1f))),
+                    shape = RoundedCornerShape(16.dp)
+                ),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground)
+            colors = CardDefaults.cardColors(containerColor = Surface)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Developer Testing Options",
+                    text = "🧪 Developer Testing Options",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
@@ -223,35 +271,41 @@ fun SettingsScreen(
                         Toast.makeText(context, "Mock data successfully injected!", Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentBlueMid),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryMuted),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Build, contentDescription = "Developer", tint = PrimaryPurple)
+                        Icon(Icons.Default.Build, contentDescription = "Developer", tint = PrimaryViolet)
                         Text(text = "Inject Simulated SMS Alerts", fontWeight = FontWeight.Bold, color = TextPrimary)
                     }
                 }
             }
         }
 
-        // Danger Zone
+        // Danger Zone — red gradient border glow
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    width = 1.dp,
+                    brush = Brush.linearGradient(listOf(DebitRed.copy(alpha = 0.5f), AccentAmber.copy(alpha = 0.2f))),
+                    shape = RoundedCornerShape(16.dp)
+                ),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = CardBackground)
+            colors = CardDefaults.cardColors(containerColor = Surface)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Danger Zone",
+                    text = "⚠️ Danger Zone",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = WarningRed
+                    color = DebitRed
                 )
                 Text(
                     text = "Deleting transactions is permanent. Offline storage data cannot be recovered.",
@@ -262,15 +316,15 @@ fun SettingsScreen(
                 Button(
                     onClick = { showClearDialog = true },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = WarningRed),
+                    colors = ButtonDefaults.buttonColors(containerColor = DebitRed),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = "Clear", tint = TextPrimary)
-                        Text(text = "Wipe Database Records", fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.Delete, contentDescription = "Clear", tint = Color.White)
+                        Text(text = "Wipe Database Records", fontWeight = FontWeight.Bold, color = Color.White)
                     }
                 }
             }
@@ -301,7 +355,7 @@ fun SettingsScreen(
             Text(
                 text = "Version 1.0.0 (Native Room DB & Compose)",
                 fontSize = 10.sp,
-                color = TextSecondary
+                color = TextMuted
             )
         }
     }
@@ -320,7 +374,7 @@ fun SettingsScreen(
                         Toast.makeText(context, "All transaction records deleted.", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text(text = "WIPE ALL", color = WarningRed, fontWeight = FontWeight.Bold)
+                    Text(text = "WIPE ALL", color = DebitRed, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -328,7 +382,7 @@ fun SettingsScreen(
                     Text(text = "CANCEL", color = TextPrimary)
                 }
             },
-            containerColor = CardBackground,
+            containerColor = Surface,
             titleContentColor = TextPrimary,
             textContentColor = TextSecondary
         )

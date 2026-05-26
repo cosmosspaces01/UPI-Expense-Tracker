@@ -1,7 +1,9 @@
 package com.upi.expensetracker.ui.screens
 
 import android.widget.Toast
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -58,17 +61,17 @@ fun BudgetsScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(Background)
     ) {
         // App Bar
         TopAppBar(
-            title = { Text("Category Budgets", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+            title = { Text("🎯 Category Budgets", color = TextPrimary, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextPrimary)
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Background)
         )
 
         LazyColumn(
@@ -79,54 +82,65 @@ fun BudgetsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
-            // Overview Dashboard
+            // Overview Dashboard — Gradient card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardBackground)
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "BUDGET OVERVIEW",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = TextSecondary,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(text = "Total Limit", fontSize = 13.sp, color = TextSecondary)
-                                Text(
-                                    text = "₹${String.format("%,.0f", totalBudgeted)}",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(text = "Spent", fontSize = 13.sp, color = TextSecondary)
-                                Text(
-                                    text = "₹${String.format("%,.0f", totalSpentInMonth)}",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = WarningRed
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(text = "Remaining", fontSize = 13.sp, color = TextSecondary)
-                                val remColor = if (remainingBudget >= 0) SuccessGreen else WarningRed
-                                Text(
-                                    text = "₹${String.format("%,.0f", remainingBudget)}",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = remColor
-                                )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(GradientStart, GradientMid)
+                                ),
+                                shape = RoundedCornerShape(20.dp)
+                            )
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "BUDGET OVERVIEW",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White.copy(alpha = 0.7f),
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(text = "Total Limit", fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+                                    Text(
+                                        text = "₹${String.format("%,.0f", totalBudgeted)}",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(text = "Spent", fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+                                    Text(
+                                        text = "₹${String.format("%,.0f", totalSpentInMonth)}",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(text = "Remaining", fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
+                                    val remColor = if (remainingBudget >= 0) SuccessGreen else DebitRed
+                                    Text(
+                                        text = "₹${String.format("%,.0f", remainingBudget)}",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = remColor
+                                    )
+                                }
                             }
                         }
                     }
@@ -135,22 +149,33 @@ fun BudgetsScreen(
 
             item {
                 Text(
-                    text = "Category Allowances",
+                    text = "📋 Category Allowances",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
             }
 
-            // Categories Budget list
+            // Categories Budget list with gradient progress bars
             items(categories) { category ->
                 val limit = category.budget
                 val spent = categorySpends[category.name] ?: 0.0
+                val emoji = getCategoryEmoji(category.icon)
+                val catColor = try {
+                    Color(android.graphics.Color.parseColor(category.color))
+                } catch (e: Exception) {
+                    PrimaryViolet
+                }
                 
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(CardBackground, RoundedCornerShape(16.dp))
+                        .background(Surface, RoundedCornerShape(16.dp))
+                        .border(
+                            width = 0.5.dp,
+                            color = catColor.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(16.dp)
+                        )
                         .clickable {
                             selectedCategoryForBudget = category
                             budgetInputStr = limit?.toString() ?: ""
@@ -165,11 +190,15 @@ fun BudgetsScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Emoji avatar
                                 Box(
                                     modifier = Modifier
-                                        .size(10.dp)
-                                        .background(Color(android.graphics.Color.parseColor(category.color)), RoundedCornerShape(5.dp))
-                                )
+                                        .size(32.dp)
+                                        .background(catColor.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(text = emoji, fontSize = 16.sp)
+                                }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = category.name,
@@ -190,7 +219,7 @@ fun BudgetsScreen(
                                 Text(
                                     text = "Set Limit",
                                     fontSize = 12.sp,
-                                    color = PrimaryPurple,
+                                    color = PrimaryViolet,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -199,9 +228,14 @@ fun BudgetsScreen(
                         if (limit != null) {
                             Spacer(modifier = Modifier.height(10.dp))
                             val pct = (spent / limit).coerceIn(0.0, 1.0)
-                            val barColor = if (pct >= 0.8) WarningRed else SuccessGreen
 
-                            // Native Compose progress bar matching design system
+                            // Gradient progress bar: mint → amber → red based on percentage
+                            val barGradient = when {
+                                pct >= 0.8 -> Brush.horizontalGradient(listOf(AccentAmber, DebitRed))
+                                pct >= 0.5 -> Brush.horizontalGradient(listOf(AccentMint, AccentAmber))
+                                else -> Brush.horizontalGradient(listOf(AccentMint, AccentSky))
+                            }
+
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -212,15 +246,15 @@ fun BudgetsScreen(
                                     modifier = Modifier
                                         .fillMaxWidth(pct.toFloat())
                                         .fillMaxHeight()
-                                        .background(barColor, RoundedCornerShape(4.dp))
+                                        .background(barGradient, RoundedCornerShape(4.dp))
                                 )
                             }
                             
                             if (pct >= 0.8) {
                                 Text(
-                                    text = if (pct >= 1.0) "⚠️ Budget Limit Exceeded!" else "📢 Budget exceeds 80% capacity!",
+                                    text = if (pct >= 1.0) "🚨 Budget Limit Exceeded!" else "📢 Budget exceeds 80% capacity!",
                                     fontSize = 10.sp,
-                                    color = WarningRed,
+                                    color = DebitRed,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(top = 4.dp)
                                 )
@@ -247,8 +281,8 @@ fun BudgetsScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = PrimaryPurple,
-                            unfocusedBorderColor = AccentBlueMid,
+                            focusedBorderColor = PrimaryViolet,
+                            unfocusedBorderColor = PrimaryMuted,
                             focusedTextColor = TextPrimary,
                             unfocusedTextColor = TextPrimary
                         ),
@@ -267,7 +301,7 @@ fun BudgetsScreen(
                         Toast.makeText(context, "Budget limit updated successfully!", Toast.LENGTH_SHORT).show()
                     }
                 ) {
-                    Text(text = "SAVE", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                    Text(text = "SAVE", color = PrimaryViolet, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -275,7 +309,7 @@ fun BudgetsScreen(
                     Text(text = "CANCEL", color = TextPrimary)
                 }
             },
-            containerColor = CardBackground
+            containerColor = Surface
         )
     }
 }

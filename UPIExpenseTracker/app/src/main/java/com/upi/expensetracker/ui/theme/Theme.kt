@@ -10,17 +10,17 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 // ══════════════════════════════════════════════════════════
-// Arctic Blue Material 3 Dark Color Scheme
+// Neon Sunset Material 3 Dark Color Scheme
 // ══════════════════════════════════════════════════════════
 
-private val ArcticBlueScheme = darkColorScheme(
-    primary        = AccentBlue,
+private val NeonSunsetScheme = darkColorScheme(
+    primary        = PrimaryViolet,
     onPrimary      = TextPrimary,
-    primaryContainer   = AccentBlueMid,
+    primaryContainer   = PrimaryMuted,
     onPrimaryContainer = TextPrimary,
-    secondary      = SuccessGreen,
+    secondary      = AccentMint,
     onSecondary    = Background,
-    tertiary       = AccentBlueDim,
+    tertiary       = AccentAmber,
     background     = Background,
     onBackground   = TextPrimary,
     surface        = Surface,
@@ -30,14 +30,14 @@ private val ArcticBlueScheme = darkColorScheme(
     error          = DebitRed,
     onError        = TextPrimary,
     outline        = Divider,
-    outlineVariant = AccentBlueMid
+    outlineVariant = PrimaryMuted
 )
 
 @Composable
 fun UPIExpenseTrackerTheme(
     content: @Composable () -> Unit
 ) {
-    val colorScheme = ArcticBlueScheme
+    val colorScheme = NeonSunsetScheme
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {

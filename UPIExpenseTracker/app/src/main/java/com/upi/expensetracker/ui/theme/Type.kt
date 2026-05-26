@@ -20,23 +20,23 @@ val NunitoFamily = FontFamily(
 )
 
 // ══════════════════════════════════════════════════════════
-// Material 3 Typography — Arctic Blue scale
+// Material 3 Typography — Neon Sunset scale
 // ══════════════════════════════════════════════════════════
 //
 // Font size reference:
-//   Hero amount      → 32sp  Bold
-//   Screen title     → 20sp  Bold
+//   Hero amount      → 36sp  Bold   (bumped for drama)
+//   Screen title     → 22sp  Bold
 //   Card title       → 15sp  SemiBold
 //   Body/description → 13sp  Normal
 //   Caption/timestamp → 11sp Light
 
 val Typography = Typography(
-    // Hero amounts, large numbers
+    // Hero amounts, large numbers — bigger for dramatic impact
     headlineLarge = TextStyle(
         fontFamily = NunitoFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
+        fontSize = 36.sp,
+        lineHeight = 44.sp,
         letterSpacing = 0.sp,
         color = TextPrimary
     ),
@@ -44,8 +44,8 @@ val Typography = Typography(
     headlineMedium = TextStyle(
         fontFamily = NunitoFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 20.sp,
-        lineHeight = 28.sp,
+        fontSize = 22.sp,
+        lineHeight = 30.sp,
         letterSpacing = 0.sp,
         color = TextPrimary
     ),

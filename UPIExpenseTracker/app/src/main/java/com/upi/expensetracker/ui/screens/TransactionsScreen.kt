@@ -17,12 +17,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.widget.Toast
+import androidx.compose.animation.core.*
 import com.upi.expensetracker.data.TransactionEntity
 import com.upi.expensetracker.ui.MainViewModel
 import com.upi.expensetracker.ui.theme.*
@@ -42,6 +45,23 @@ fun TransactionsScreen(
     val categories by viewModel.allCategories.collectAsState()
     val context = LocalContext.current
     var isSyncing by remember { mutableStateOf(false) }
+
+    // Build category lookup map
+    val categoryMap = remember(categories) {
+        categories.associateBy { it.name }
+    }
+
+    // Sync icon rotation animation
+    val infiniteTransition = rememberInfiniteTransition(label = "syncSpin")
+    val syncRotation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "syncRotation"
+    )
 
     // Date Format Helpers
     val dbDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -129,7 +149,7 @@ fun TransactionsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (useDateRange) "Date Range Filter" else "Select Transaction Date",
+                    text = if (useDateRange) "📅 Date Range Filter" else "📅 Select Transaction Date",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = TextSecondary
@@ -141,13 +161,13 @@ fun TransactionsScreen(
                     Icon(
                         imageVector = Icons.Default.DateRange,
                         contentDescription = "Date Range",
-                        tint = if (useDateRange) AccentBlue else TextMuted,
+                        tint = if (useDateRange) PrimaryViolet else TextMuted,
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
                         text = "Range",
                         fontSize = 12.sp,
-                        color = if (useDateRange) AccentBlue else TextMuted,
+                        color = if (useDateRange) PrimaryViolet else TextMuted,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.clickable { useDateRange = !useDateRange }
                     )
@@ -167,7 +187,7 @@ fun TransactionsScreen(
                         onClick = { showStartDatePicker = true },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, if (dateRangeStart.isNotEmpty()) AccentBlue else Divider),
+                        border = BorderStroke(1.dp, if (dateRangeStart.isNotEmpty()) PrimaryViolet else Divider),
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = Surface)
                     ) {
                         Text(
@@ -182,7 +202,7 @@ fun TransactionsScreen(
                         onClick = { showEndDatePicker = true },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, if (dateRangeEnd.isNotEmpty()) AccentBlue else Divider),
+                        border = BorderStroke(1.dp, if (dateRangeEnd.isNotEmpty()) PrimaryViolet else Divider),
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = Surface)
                     ) {
                         Text(
@@ -193,40 +213,60 @@ fun TransactionsScreen(
                     }
                 }
             } else {
-                // Single-day scroll selector (existing)
+                // Single-day scroll selector with gradient selected chip
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(horizontal = 20.dp)
                 ) {
                     items(calendarList) { (dbDate, displayDate) ->
                         val isSelected = dbDate == selectedDate
-                        val boxBg = if (isSelected) AccentBlue else Surface
-                        val textColor = if (isSelected) TextPrimary else TextMuted
 
                         Box(
                             modifier = Modifier
                                 .width(60.dp)
-                                .height(64.dp)
-                                .background(boxBg, RoundedCornerShape(12.dp))
+                                .height(68.dp)
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(PrimaryViolet, PrimaryPink)
+                                            ),
+                                            shape = RoundedCornerShape(14.dp)
+                                        )
+                                    } else {
+                                        Modifier.background(Surface, RoundedCornerShape(14.dp))
+                                    }
+                                )
                                 .clickable { selectedDate = dbDate }
                                 .padding(8.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                text = displayDate,
-                                color = textColor,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                lineHeight = 16.sp
-                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = displayDate,
+                                    color = if (isSelected) Color.White else TextMuted,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    lineHeight = 16.sp
+                                )
+                                // Dot indicator for selected
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(4.dp)
+                                            .background(Color.White, RoundedCornerShape(2.dp))
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Sync button for the selected date
+        // Sync button for the selected date — gradient style
         Button(
             onClick = {
                 if (!isSyncing) {
@@ -252,34 +292,60 @@ fun TransactionsScreen(
                 .padding(horizontal = 20.dp),
             enabled = !isSyncing && !useDateRange,
             colors = ButtonDefaults.buttonColors(
-                containerColor = AccentBlue,
+                containerColor = Color.Transparent,
                 disabledContainerColor = SurfaceElevated
             ),
             shape = RoundedCornerShape(12.dp),
-            contentPadding = PaddingValues(vertical = 8.dp)
+            contentPadding = PaddingValues()
         ) {
-            if (isSyncing) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = TextPrimary,
-                    strokeWidth = 2.dp
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Syncing...", fontSize = 13.sp, color = TextPrimary)
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "Sync",
-                    tint = TextPrimary,
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = "Sync SMS for $selectedDate",
-                    fontSize = 13.sp,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.SemiBold
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .background(
+                        brush = if (!isSyncing && !useDateRange) {
+                            Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink))
+                        } else {
+                            Brush.horizontalGradient(listOf(SurfaceElevated, SurfaceElevated))
+                        },
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isSyncing) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Syncing",
+                            tint = TextPrimary,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .rotate(syncRotation)
+                        )
+                        Text("Syncing...", fontSize = 13.sp, color = TextPrimary)
+                    }
+                } else {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Sync",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "Sync SMS for $selectedDate",
+                            fontSize = 13.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
             }
         }
 
@@ -290,7 +356,7 @@ fun TransactionsScreen(
                 .padding(horizontal = 20.dp, vertical = 4.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Search Input
+            // Search Input with gradient focus border
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -301,7 +367,7 @@ fun TransactionsScreen(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Surface,
                     unfocusedContainerColor = Surface,
-                    focusedBorderColor = AccentBlue,
+                    focusedBorderColor = PrimaryViolet,
                     unfocusedBorderColor = Color.Transparent,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary
@@ -324,13 +390,13 @@ fun TransactionsScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = SurfaceElevated,
                         unfocusedContainerColor = SurfaceElevated,
-                        focusedBorderColor = AccentBlue,
-                        unfocusedBorderColor = AccentBlueMid,
-                        focusedLabelColor = AccentBlue,
+                        focusedBorderColor = PrimaryViolet,
+                        unfocusedBorderColor = PrimaryMuted,
+                        focusedLabelColor = PrimaryViolet,
                         unfocusedLabelColor = TextSecondary,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        cursorColor = AccentBlue
+                        cursorColor = PrimaryViolet
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
@@ -344,19 +410,19 @@ fun TransactionsScreen(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = SurfaceElevated,
                         unfocusedContainerColor = SurfaceElevated,
-                        focusedBorderColor = AccentBlue,
-                        unfocusedBorderColor = AccentBlueMid,
-                        focusedLabelColor = AccentBlue,
+                        focusedBorderColor = PrimaryViolet,
+                        unfocusedBorderColor = PrimaryMuted,
+                        focusedLabelColor = PrimaryViolet,
                         unfocusedLabelColor = TextSecondary,
                         focusedTextColor = TextPrimary,
                         unfocusedTextColor = TextPrimary,
-                        cursorColor = AccentBlue
+                        cursorColor = PrimaryViolet
                     ),
                     shape = RoundedCornerShape(12.dp)
                 )
             }
 
-            // Category filters horizontal row
+            // Category filters — each chip uses its own category color
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -367,32 +433,37 @@ fun TransactionsScreen(
                         onClick = { selectedCategoryFilter = "All" },
                         label = { Text("All", fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentBlue,
+                            selectedContainerColor = PrimaryViolet,
                             containerColor = Surface,
                             labelColor = TextMuted,
-                            selectedLabelColor = TextPrimary
+                            selectedLabelColor = Color.White
                         ),
                         border = null
                     )
                 }
                 items(categories) { cat ->
                     val isSelected = selectedCategoryFilter == cat.name
+                    val catColor = try {
+                        Color(android.graphics.Color.parseColor(cat.color))
+                    } catch (e: Exception) {
+                        PrimaryViolet
+                    }
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedCategoryFilter = cat.name },
                         label = { Text(cat.name, fontSize = 12.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentBlue,
+                            selectedContainerColor = catColor,
                             containerColor = Surface,
                             labelColor = TextMuted,
-                            selectedLabelColor = TextPrimary
+                            selectedLabelColor = Color.White
                         ),
                         border = null
                     )
                 }
             }
 
-            // Sorting bar — count + sort options side by side
+            // Sorting bar — count + sort options with gradient active pill
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -414,9 +485,17 @@ fun TransactionsScreen(
                         val isSelected = sortBy == sortOption
                         Box(
                             modifier = Modifier
-                                .background(
-                                    if (isSelected) AccentBlue else Color.Transparent,
-                                    RoundedCornerShape(8.dp)
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.background(
+                                            brush = Brush.horizontalGradient(
+                                                listOf(PrimaryViolet, PrimaryPink)
+                                            ),
+                                            shape = RoundedCornerShape(8.dp)
+                                        )
+                                    } else {
+                                        Modifier.background(Color.Transparent, RoundedCornerShape(8.dp))
+                                    }
                                 )
                                 .clickable { sortBy = sortOption }
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
@@ -425,7 +504,7 @@ fun TransactionsScreen(
                                 text = label,
                                 fontSize = 11.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) TextPrimary else TextSecondary
+                                color = if (isSelected) Color.White else TextSecondary
                             )
                         }
                     }
@@ -446,11 +525,17 @@ fun TransactionsScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "💸",
-                        fontSize = 32.sp
+                        text = "🎉",
+                        fontSize = 40.sp
                     )
                     Text(
-                        text = "No transactions found for this selection.",
+                        text = "No spending here!",
+                        color = TextPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Your wallet is smiling 😊",
                         color = TextMuted,
                         fontSize = 14.sp
                     )
@@ -467,6 +552,7 @@ fun TransactionsScreen(
                 items(filteredTransactions, key = { it.id }) { txn ->
                     TransactionItemCard(
                         transaction = txn,
+                        category = categoryMap[txn.category],
                         onClick = { onEditTransaction(txn) }
                     )
                 }
@@ -487,7 +573,7 @@ fun TransactionsScreen(
                     }
                     showStartDatePicker = false
                 }) {
-                    Text("OK", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                    Text("OK", color = PrimaryViolet, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -495,19 +581,19 @@ fun TransactionsScreen(
                     Text("CANCEL", color = TextPrimary)
                 }
             },
-            colors = DatePickerDefaults.colors(containerColor = CardBackground)
+            colors = DatePickerDefaults.colors(containerColor = Surface)
         ) {
             DatePicker(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
-                    containerColor = CardBackground,
+                    containerColor = Surface,
                     titleContentColor = TextPrimary,
                     headlineContentColor = TextPrimary,
                     weekdayContentColor = TextSecondary,
                     dayContentColor = TextPrimary,
-                    selectedDayContainerColor = PrimaryPurple,
-                    todayContentColor = PrimaryPurple,
-                    todayDateBorderColor = PrimaryPurple
+                    selectedDayContainerColor = PrimaryViolet,
+                    todayContentColor = PrimaryViolet,
+                    todayDateBorderColor = PrimaryViolet
                 )
             )
         }
@@ -526,7 +612,7 @@ fun TransactionsScreen(
                     }
                     showEndDatePicker = false
                 }) {
-                    Text("OK", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                    Text("OK", color = PrimaryViolet, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -534,19 +620,19 @@ fun TransactionsScreen(
                     Text("CANCEL", color = TextPrimary)
                 }
             },
-            colors = DatePickerDefaults.colors(containerColor = CardBackground)
+            colors = DatePickerDefaults.colors(containerColor = Surface)
         ) {
             DatePicker(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
-                    containerColor = CardBackground,
+                    containerColor = Surface,
                     titleContentColor = TextPrimary,
                     headlineContentColor = TextPrimary,
                     weekdayContentColor = TextSecondary,
                     dayContentColor = TextPrimary,
-                    selectedDayContainerColor = PrimaryPurple,
-                    todayContentColor = PrimaryPurple,
-                    todayDateBorderColor = PrimaryPurple
+                    selectedDayContainerColor = PrimaryViolet,
+                    todayContentColor = PrimaryViolet,
+                    todayDateBorderColor = PrimaryViolet
                 )
             )
         }

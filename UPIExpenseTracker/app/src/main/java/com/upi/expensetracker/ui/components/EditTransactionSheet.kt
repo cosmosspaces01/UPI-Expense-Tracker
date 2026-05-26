@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -52,7 +53,10 @@ fun EditTransactionSheet(
                     .padding(top = 12.dp, bottom = 8.dp)
                     .width(40.dp)
                     .height(4.dp)
-                    .background(SurfaceElevated, RoundedCornerShape(2.dp))
+                    .background(
+                        brush = Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink)),
+                        shape = RoundedCornerShape(2.dp)
+                    )
             )
         },
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
@@ -66,7 +70,7 @@ fun EditTransactionSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Edit Transaction",
+                text = "✏️ Edit Transaction",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -87,13 +91,13 @@ fun EditTransactionSheet(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = AccentBlueMid,
-                    focusedLabelColor = AccentBlue,
+                    focusedBorderColor = PrimaryViolet,
+                    unfocusedBorderColor = PrimaryMuted,
+                    focusedLabelColor = PrimaryViolet,
                     unfocusedLabelColor = TextSecondary,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    cursorColor = AccentBlue
+                    cursorColor = PrimaryViolet
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -107,18 +111,18 @@ fun EditTransactionSheet(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = AccentBlueMid,
-                    focusedLabelColor = AccentBlue,
+                    focusedBorderColor = PrimaryViolet,
+                    unfocusedBorderColor = PrimaryMuted,
+                    focusedLabelColor = PrimaryViolet,
                     unfocusedLabelColor = TextSecondary,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    cursorColor = AccentBlue
+                    cursorColor = PrimaryViolet
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
 
-            // Category Horizontal Selector
+            // Category Horizontal Selector — each chip uses its own color
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     text = "Select Category",
@@ -132,9 +136,14 @@ fun EditTransactionSheet(
                 ) {
                     items(categories) { category ->
                         val isSelected = category.name == selectedCategory
-                        val chipBg = if (isSelected) AccentBlueMid else Divider
-                        val chipText = if (isSelected) TextPrimary else TextMuted
-                        val chipBorder = if (isSelected) AccentBlue else AccentBlueMid
+                        val catColor = try {
+                            Color(android.graphics.Color.parseColor(category.color))
+                        } catch (e: Exception) {
+                            PrimaryViolet
+                        }
+                        val chipBg = if (isSelected) catColor.copy(alpha = 0.2f) else Divider
+                        val chipText = if (isSelected) catColor else TextMuted
+                        val chipBorder = if (isSelected) catColor else PrimaryMuted
                         
                         Box(
                             modifier = Modifier
@@ -151,7 +160,7 @@ fun EditTransactionSheet(
                                 Box(
                                     modifier = Modifier
                                         .size(8.dp)
-                                        .background(Color(android.graphics.Color.parseColor(category.color)), RoundedCornerShape(4.dp))
+                                        .background(catColor, RoundedCornerShape(4.dp))
                                 )
                                 Text(
                                     text = category.name,
@@ -174,13 +183,13 @@ fun EditTransactionSheet(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = AccentBlueMid,
-                    focusedLabelColor = AccentBlue,
+                    focusedBorderColor = PrimaryViolet,
+                    unfocusedBorderColor = PrimaryMuted,
+                    focusedLabelColor = PrimaryViolet,
                     unfocusedLabelColor = TextSecondary,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    cursorColor = AccentBlue
+                    cursorColor = PrimaryViolet
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -202,7 +211,7 @@ fun EditTransactionSheet(
                     onCheckedChange = { isSplit = it },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = TextPrimary,
-                        checkedTrackColor = AccentBlue,
+                        checkedTrackColor = PrimaryViolet,
                         uncheckedThumbColor = TextMuted,
                         uncheckedTrackColor = SurfaceElevated
                     )
@@ -223,11 +232,11 @@ fun EditTransactionSheet(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = SurfaceElevated,
                             unfocusedContainerColor = SurfaceElevated,
-                            focusedBorderColor = AccentBlue,
-                            unfocusedBorderColor = AccentBlueMid,
-                            focusedLabelColor = AccentBlue,
+                            focusedBorderColor = PrimaryViolet,
+                            unfocusedBorderColor = PrimaryMuted,
+                            focusedLabelColor = PrimaryViolet,
                             unfocusedLabelColor = TextSecondary,
-                            cursorColor = AccentBlue
+                            cursorColor = PrimaryViolet
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -241,11 +250,11 @@ fun EditTransactionSheet(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = SurfaceElevated,
                             unfocusedContainerColor = SurfaceElevated,
-                            focusedBorderColor = AccentBlue,
-                            unfocusedBorderColor = AccentBlueMid,
-                            focusedLabelColor = AccentBlue,
+                            focusedBorderColor = PrimaryViolet,
+                            unfocusedBorderColor = PrimaryMuted,
+                            focusedLabelColor = PrimaryViolet,
                             unfocusedLabelColor = TextSecondary,
-                            cursorColor = AccentBlue
+                            cursorColor = PrimaryViolet
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -265,7 +274,7 @@ fun EditTransactionSheet(
                         checked = isSettled,
                         onCheckedChange = { isSettled = it ?: false },
                         colors = CheckboxDefaults.colors(
-                            checkedColor = AccentBlue,
+                            checkedColor = PrimaryViolet,
                             uncheckedColor = TextMuted
                         )
                     )
@@ -274,7 +283,7 @@ fun EditTransactionSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Save Button
+            // Save Button — Gradient
             Button(
                 onClick = {
                     val updated = transaction.copy(
@@ -291,16 +300,27 @@ fun EditTransactionSheet(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
-                shape = RoundedCornerShape(14.dp)
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = PaddingValues()
             ) {
-                Text(
-                    text = "Save Changes",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink)),
+                            shape = RoundedCornerShape(14.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Save Changes ✨",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))

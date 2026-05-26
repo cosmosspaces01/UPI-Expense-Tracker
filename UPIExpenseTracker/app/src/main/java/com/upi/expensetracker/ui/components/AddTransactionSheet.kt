@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -65,7 +66,10 @@ fun AddTransactionSheet(
                     .padding(top = 12.dp, bottom = 8.dp)
                     .width(40.dp)
                     .height(4.dp)
-                    .background(SurfaceElevated, RoundedCornerShape(2.dp))
+                    .background(
+                        brush = Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink)),
+                        shape = RoundedCornerShape(2.dp)
+                    )
             )
         },
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
@@ -80,7 +84,7 @@ fun AddTransactionSheet(
         ) {
             // Title
             Text(
-                text = "Add Transaction",
+                text = "➕ Add Transaction",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -103,13 +107,13 @@ fun AddTransactionSheet(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = AccentBlueMid,
-                    focusedLabelColor = AccentBlue,
+                    focusedBorderColor = PrimaryViolet,
+                    unfocusedBorderColor = PrimaryMuted,
+                    focusedLabelColor = PrimaryViolet,
                     unfocusedLabelColor = TextSecondary,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    cursorColor = AccentBlue
+                    cursorColor = PrimaryViolet
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -124,13 +128,13 @@ fun AddTransactionSheet(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = AccentBlueMid,
-                    focusedLabelColor = AccentBlue,
+                    focusedBorderColor = PrimaryViolet,
+                    unfocusedBorderColor = PrimaryMuted,
+                    focusedLabelColor = PrimaryViolet,
                     unfocusedLabelColor = TextSecondary,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    cursorColor = AccentBlue
+                    cursorColor = PrimaryViolet
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -145,13 +149,13 @@ fun AddTransactionSheet(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = AccentBlueMid,
-                    focusedLabelColor = AccentBlue,
+                    focusedBorderColor = PrimaryViolet,
+                    unfocusedBorderColor = PrimaryMuted,
+                    focusedLabelColor = PrimaryViolet,
                     unfocusedLabelColor = TextSecondary,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    cursorColor = AccentBlue
+                    cursorColor = PrimaryViolet
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -163,20 +167,20 @@ fun AddTransactionSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Date", fontSize = 12.sp, color = TextMuted)
+                    Text("📅 Date", fontSize = 12.sp, color = TextMuted)
                     Text(selectedDate, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
                 }
                 OutlinedButton(
                     onClick = { showDatePicker = true },
                     shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.dp, AccentBlueMid),
+                    border = BorderStroke(1.dp, PrimaryMuted),
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.Transparent)
                 ) {
-                    Text("Change Date", fontSize = 12.sp, color = AccentBlue)
+                    Text("Change Date", fontSize = 12.sp, color = PrimaryViolet)
                 }
             }
 
-            // Category Selector
+            // Category Selector — each chip uses its own category color
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
                     text = "Category",
@@ -189,9 +193,14 @@ fun AddTransactionSheet(
                 ) {
                     items(categories) { category ->
                         val isSelected = category.name == selectedCategory
-                        val chipBg = if (isSelected) AccentBlueMid else Divider
-                        val chipText = if (isSelected) TextPrimary else TextMuted
-                        val chipBorder = if (isSelected) AccentBlue else AccentBlueMid
+                        val catColor = try {
+                            Color(android.graphics.Color.parseColor(category.color))
+                        } catch (e: Exception) {
+                            PrimaryViolet
+                        }
+                        val chipBg = if (isSelected) catColor.copy(alpha = 0.2f) else Divider
+                        val chipText = if (isSelected) catColor else TextMuted
+                        val chipBorder = if (isSelected) catColor else PrimaryMuted
 
                         Box(
                             modifier = Modifier
@@ -207,10 +216,7 @@ fun AddTransactionSheet(
                                 Box(
                                     modifier = Modifier
                                         .size(8.dp)
-                                        .background(
-                                            Color(android.graphics.Color.parseColor(category.color)),
-                                            RoundedCornerShape(4.dp)
-                                        )
+                                        .background(catColor, RoundedCornerShape(4.dp))
                                 )
                                 Text(
                                     text = category.name,
@@ -234,20 +240,20 @@ fun AddTransactionSheet(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = SurfaceElevated,
                     unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = AccentBlue,
-                    unfocusedBorderColor = AccentBlueMid,
-                    focusedLabelColor = AccentBlue,
+                    focusedBorderColor = PrimaryViolet,
+                    unfocusedBorderColor = PrimaryMuted,
+                    focusedLabelColor = PrimaryViolet,
                     unfocusedLabelColor = TextSecondary,
                     focusedTextColor = TextPrimary,
                     unfocusedTextColor = TextPrimary,
-                    cursorColor = AccentBlue
+                    cursorColor = PrimaryViolet
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Add Button
+            // Add Button — Gradient
             Button(
                 onClick = {
                     val amount = amountText.toDoubleOrNull() ?: 0.0
@@ -265,20 +271,35 @@ fun AddTransactionSheet(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(50.dp),
                 enabled = isValid,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentBlue,
+                    containerColor = Color.Transparent,
                     disabledContainerColor = SurfaceElevated
                 ),
-                shape = RoundedCornerShape(14.dp)
+                shape = RoundedCornerShape(14.dp),
+                contentPadding = PaddingValues()
             ) {
-                Text(
-                    text = "Add Expense",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isValid) TextPrimary else TextMuted
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            brush = if (isValid) {
+                                Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink))
+                            } else {
+                                Brush.horizontalGradient(listOf(SurfaceElevated, SurfaceElevated))
+                            },
+                            shape = RoundedCornerShape(14.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Add Expense ✨",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isValid) Color.White else TextMuted
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -298,7 +319,7 @@ fun AddTransactionSheet(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK", color = AccentBlue, fontWeight = FontWeight.Bold)
+                    Text("OK", color = PrimaryViolet, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -316,9 +337,9 @@ fun AddTransactionSheet(
                     headlineContentColor = TextPrimary,
                     weekdayContentColor = TextMuted,
                     dayContentColor = TextPrimary,
-                    selectedDayContainerColor = AccentBlue,
-                    todayContentColor = AccentBlue,
-                    todayDateBorderColor = AccentBlue
+                    selectedDayContainerColor = PrimaryViolet,
+                    todayContentColor = PrimaryViolet,
+                    todayDateBorderColor = PrimaryViolet
                 )
             )
         }
