@@ -3,58 +3,55 @@ package com.upi.expensetracker.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ══════════════════════════════════════════════════════════
-// Neon Sunset — Vibrant Dark Fintech Theme
+// Midnight Slate — Clean & Professional Dark Fintech Theme
 // ══════════════════════════════════════════════════════════
 
-// Core surfaces (warm charcoal with violet undertone)
-val Background       = Color(0xFF0D0B15)  // page background
-val Surface          = Color(0xFF1A1625)  // cards, bottom sheets
-val SurfaceElevated  = Color(0xFF252136)  // elevated cards, modals
+// Core surfaces (neutral dark slate — no undertones)
+val Background       = Color(0xFF0F1117)  // page background
+val Surface          = Color(0xFF1A1D26)  // cards, bottom sheets
+val SurfaceElevated  = Color(0xFF242832)  // modals, elevated content
 
-// Primary gradient palette (Violet → Hot Pink)
-val PrimaryViolet    = Color(0xFF7C5CFC)  // primary CTA, active states
-val PrimaryPink      = Color(0xFFFF6B9D)  // gradient end, highlights
-val PrimaryMuted     = Color(0xFF5A3FB5)  // secondary buttons, borders
+// Accent (teal — the only accent color, used sparingly)
+val Accent           = Color(0xFF00BFA6)  // primary CTA, active states, links
+val AccentDim        = Color(0xFF00897B)  // borders, secondary buttons, muted accent
 
-// Gradient helper colors
-val GradientStart    = Color(0xFF7C5CFC)  // violet
-val GradientMid      = Color(0xFFE84393)  // hot pink
-val GradientEnd      = Color(0xFFFF6B6B)  // coral
+// Text hierarchy (cool pure whites)
+val TextPrimary      = Color(0xFFF0F2F5)  // headings, amounts, primary content
+val TextSecondary    = Color(0xFF8E95A2)  // labels, subtitles, descriptions
+val TextMuted        = Color(0xFF4A5060)  // timestamps, hints, disabled text
 
-// Accent palette (multi-color for variety)
-val AccentCoral      = Color(0xFFFF6B6B)  // warm red accent
-val AccentAmber      = Color(0xFFFFB84D)  // golden amber accent
-val AccentMint       = Color(0xFF4ECBA0)  // fresh mint accent
-val AccentSky        = Color(0xFF5ED4F5)  // sky blue accent
-
-// Text hierarchy (warm whites)
-val TextPrimary      = Color(0xFFF5F0FF)  // headings, amounts
-val TextSecondary    = Color(0xFFB8A9D4)  // labels, subtitles
-val TextMuted        = Color(0xFF5A4D73)  // timestamps, hints
-
-// Semantic colors
-val DebitRed         = Color(0xFFFF6B6B)  // debited amounts
-val SuccessGreen     = Color(0xFF4ECBA0)  // settled, credited
-val WarningAmber     = Color(0xFFFFB84D)  // budget warnings
+// Semantic colors (standard, recognizable)
+val DebitRed         = Color(0xFFEF5350)  // debited amounts, danger actions
+val SuccessGreen     = Color(0xFF66BB6A)  // settled, credited, success
+val WarningAmber     = Color(0xFFFFA726)  // budget warnings, caution
 
 // Structural
-val Divider          = Color(0xFF1E1A2E)  // list dividers, borders
+val Divider          = Color(0xFF1E222C)  // subtle separators, card borders
 
 // ── Backward-compatible aliases ──────────────────────────
-// These map old names → new Neon Sunset values so existing
-// code compiles without a mass search-replace of every file.
+// Maps legacy names used across files to new Midnight Slate values.
 val DarkBackground      = Background
 val CardBackground      = Surface
-val PrimaryPurple       = PrimaryViolet
-val PrimaryPurpleLight  = PrimaryMuted
-val AccentBlue          = PrimaryViolet
-val AccentBlueMid       = PrimaryMuted
-val AccentBlueDim       = Color(0xFF3A2D6B)
+val PrimaryPurple       = Accent
+val PrimaryPurpleLight  = AccentDim
+val AccentBlue          = Accent
+val AccentBlueMid       = AccentDim
+val AccentBlueDim       = Color(0xFF1A3A36)
+val PrimaryViolet       = Accent
+val PrimaryPink         = Accent
+val PrimaryMuted        = AccentDim
+val GradientStart       = Accent
+val GradientMid         = Accent
+val GradientEnd         = Accent
+val AccentCoral         = DebitRed
+val AccentAmber         = WarningAmber
+val AccentMint          = SuccessGreen
+val AccentSky           = Color(0xFF5ED4F5)
 val WarningRed          = DebitRed
 val AccentOrange        = WarningAmber
-val AccentPink          = PrimaryPink
+val AccentPink          = Accent
 val AccentYellow        = WarningAmber
 val AccentGrey          = TextMuted
-val BottomNavSelected   = PrimaryViolet
+val BottomNavSelected   = Accent
 val BottomNavUnselected = TextMuted
 val BorderColor         = Divider

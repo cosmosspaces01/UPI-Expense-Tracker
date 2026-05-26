@@ -1,7 +1,6 @@
 package com.upi.expensetracker.ui.screens
 
 import android.widget.Toast
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -19,13 +18,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.upi.expensetracker.data.CategoryEntity
@@ -46,23 +45,24 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val todayTotal by viewModel.todayTotalSpend.collectAsState()
+    val monthTotal by viewModel.monthTotalSpend.collectAsState()
     val transactions by viewModel.allTransactions.collectAsState()
     val categories by viewModel.allCategories.collectAsState()
     val userName = viewModel.userName
-    
+
     var isSyncing by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val recentTransactions = transactions.take(5)
     val todayFormatted = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date())
-    
+
     val greeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-        in 0..11 -> "☀️ Good morning"
-        in 12..16 -> "🌤️ Good afternoon"
-        else -> "🌙 Good evening"
+        in 0..11 -> "Good morning"
+        in 12..16 -> "Good afternoon"
+        else -> "Good evening"
     }
 
-    // Animated sync icon rotation
+    // Sync icon rotation
     val infiniteTransition = rememberInfiniteTransition(label = "syncSpin")
     val syncRotation by infiniteTransition.animateFloat(
         initialValue = 0f,
@@ -74,7 +74,6 @@ fun HomeScreen(
         label = "syncRotation"
     )
 
-    // Build a category lookup map for emoji/color retrieval
     val categoryMap = remember(categories) {
         categories.associateBy { it.name }
     }
@@ -83,94 +82,98 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .background(Background)
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-        contentPadding = PaddingValues(top = 24.dp, bottom = 24.dp)
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(top = 28.dp, bottom = 28.dp)
     ) {
-        // Header with emoji greeting
+        // Greeting — clean, no emoji
         item {
-            Column {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text = "$greeting, $userName",
-                    fontSize = 22.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
                 Text(
                     text = todayFormatted,
                     fontSize = 13.sp,
-                    color = TextMuted,
-                    modifier = Modifier.padding(top = 4.dp)
+                    color = TextMuted
                 )
             }
         }
 
-        // Today's Spent Hero Card — Gradient background
+        // Spend overview — two stat cards side by side
         item {
-            Card(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    GradientStart,
-                                    GradientMid,
-                                    GradientEnd
-                                )
-                            ),
-                            shape = RoundedCornerShape(24.dp)
-                        )
+                // Today's spend card
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Surface),
+                    border = BorderStroke(1.dp, Divider)
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
+                        modifier = Modifier.padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Today's spend",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White.copy(alpha = 0.8f)
+                            text = "Today",
+                            fontSize = 13.sp,
+                            color = TextSecondary
                         )
-                        val spend = todayTotal ?: 0.0
                         Text(
-                            text = "₹${String.format("%,.2f", spend)}",
-                            fontSize = 36.sp,
+                            text = "₹${String.format("%,.0f", todayTotal ?: 0.0)}",
+                            fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = TextPrimary
                         )
                         val todayDateString = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-                        val todayTxnCount = transactions.filter { it.date == todayDateString }.size
-                        val txnText = if (todayTxnCount == 1) "1 transaction" else "$todayTxnCount transactions"
-                        
-                        // Transaction count pill
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    Color.White.copy(alpha = 0.2f),
-                                    RoundedCornerShape(20.dp)
-                                )
-                                .padding(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "📊 $txnText tracked today",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White
-                            )
-                        }
+                        val todayCount = transactions.count { it.date == todayDateString }
+                        Text(
+                            text = "$todayCount transactions",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+
+                // This month's spend card
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Surface),
+                    border = BorderStroke(1.dp, Divider)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "This month",
+                            fontSize = 13.sp,
+                            color = TextSecondary
+                        )
+                        Text(
+                            text = "₹${String.format("%,.0f", monthTotal ?: 0.0)}",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "${transactions.count { it.date.startsWith(SimpleDateFormat("yyyy-MM", Locale.US).format(Date())) }} transactions",
+                            fontSize = 12.sp,
+                            color = TextMuted
+                        )
                     }
                 }
             }
         }
 
-        // Sync Today Button — Gradient
+        // Sync button — solid teal
         item {
             Button(
                 onClick = {
@@ -178,89 +181,62 @@ fun HomeScreen(
                     viewModel.syncTransactions { count ->
                         isSyncing = false
                         if (count >= 0) {
-                            Toast.makeText(context, "Synced $count new transactions!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Synced $count new transactions", Toast.LENGTH_SHORT).show()
                         } else {
-                            Toast.makeText(context, "Permission denied or Sync failed", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Permission denied or sync failed", Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                shape = RoundedCornerShape(16.dp),
-                enabled = !isSyncing,
-                contentPadding = PaddingValues()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(PrimaryViolet, PrimaryPink)
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isSyncing) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Syncing",
-                                tint = Color.White,
-                                modifier = Modifier
-                                    .size(22.dp)
-                                    .rotate(syncRotation)
-                            )
-                            Text(
-                                text = "Syncing...",
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White,
-                                fontSize = 15.sp
-                            )
-                        }
-                    } else {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Sync",
-                                tint = Color.White
-                            )
-                            Text(
-                                text = "Sync Today's Transactions",
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White,
-                                fontSize = 15.sp
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // Sync Past Date Button
-        item {
-            OutlinedButton(
-                onClick = { showDatePicker = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Accent),
                 shape = RoundedCornerShape(14.dp),
-                border = BorderStroke(1.dp, PrimaryMuted),
                 enabled = !isSyncing
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "📅", fontSize = 16.sp)
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = if (isSyncing) "Syncing" else "Sync",
+                        tint = Background,
+                        modifier = Modifier
+                            .size(20.dp)
+                            .then(if (isSyncing) Modifier.rotate(syncRotation) else Modifier)
+                    )
+                    Text(
+                        text = if (isSyncing) "Syncing..." else "Sync Today's Transactions",
+                        fontWeight = FontWeight.SemiBold,
+                        color = Background,
+                        fontSize = 15.sp
+                    )
+                }
+            }
+        }
+
+        // Sync past date — outlined
+        item {
+            OutlinedButton(
+                onClick = { showDatePicker = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.dp, AccentDim),
+                enabled = !isSyncing
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Past Date",
+                        tint = TextSecondary,
+                        modifier = Modifier.size(18.dp)
+                    )
                     Text(
                         text = "Sync a Past Date",
                         fontWeight = FontWeight.Medium,
@@ -271,16 +247,16 @@ fun HomeScreen(
             }
         }
 
-        // Skeleton loading simulations
+        // Skeleton loading
         if (isSyncing) {
-            items(3) {
-                SkeletonCard()
-            }
+            items(3) { SkeletonCard() }
         } else {
-            // Recent Transactions Section Header
+            // Recent Transactions header
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -294,31 +270,26 @@ fun HomeScreen(
                         Text(
                             text = "See All (${transactions.size})",
                             fontSize = 13.sp,
-                            color = PrimaryViolet,
+                            color = Accent,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             }
 
-            // Transactions Cards
             if (recentTransactions.isEmpty()) {
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 32.dp),
+                            .padding(vertical = 40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = "🎉", fontSize = 40.sp)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "No transactions found. Tap sync to load.",
-                                color = TextSecondary,
-                                fontSize = 14.sp
-                            )
-                        }
+                        Text(
+                            text = "No transactions yet. Tap sync to load.",
+                            color = TextSecondary,
+                            fontSize = 14.sp
+                        )
                     }
                 }
             } else {
@@ -333,7 +304,7 @@ fun HomeScreen(
         }
     }
 
-    // Date Picker Dialog for syncing a past date
+    // Date Picker
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState()
         DatePickerDialog(
@@ -357,7 +328,7 @@ fun HomeScreen(
                         }
                     }
                 ) {
-                    Text("SYNC", color = PrimaryViolet, fontWeight = FontWeight.Bold)
+                    Text("SYNC", color = Accent, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -365,9 +336,7 @@ fun HomeScreen(
                     Text("CANCEL", color = TextPrimary)
                 }
             },
-            colors = DatePickerDefaults.colors(
-                containerColor = Surface
-            )
+            colors = DatePickerDefaults.colors(containerColor = Surface)
         ) {
             DatePicker(
                 state = datePickerState,
@@ -377,25 +346,16 @@ fun HomeScreen(
                     headlineContentColor = TextPrimary,
                     weekdayContentColor = TextSecondary,
                     yearContentColor = TextPrimary,
-                    currentYearContentColor = PrimaryViolet,
-                    selectedYearContainerColor = PrimaryViolet,
+                    currentYearContentColor = Accent,
+                    selectedYearContainerColor = Accent,
                     dayContentColor = TextPrimary,
-                    selectedDayContainerColor = PrimaryViolet,
-                    todayContentColor = PrimaryViolet,
-                    todayDateBorderColor = PrimaryViolet
+                    selectedDayContainerColor = Accent,
+                    todayContentColor = Accent,
+                    todayDateBorderColor = Accent
                 )
             )
         }
     }
-}
-
-/**
- * Helper to get category emoji, resolving from the entity's icon field.
- * Falls back to merchant initial if no category mapping found.
- */
-private fun getCategoryEmojiForTransaction(category: CategoryEntity?): String {
-    if (category == null) return "💸"
-    return com.upi.expensetracker.ui.screens.getCategoryEmoji(category.icon)
 }
 
 @Composable
@@ -404,49 +364,18 @@ fun TransactionItemCard(
     category: CategoryEntity? = null,
     onClick: () -> Unit
 ) {
-    // Parse category color for the avatar background
-    val avatarBgColor = remember(category) {
-        try {
-            if (category != null) {
-                Color(android.graphics.Color.parseColor(category.color)).copy(alpha = 0.2f)
-            } else {
-                SurfaceElevated
-            }
-        } catch (e: Exception) {
-            SurfaceElevated
-        }
-    }
-    val avatarAccentColor = remember(category) {
-        try {
-            if (category != null) {
-                Color(android.graphics.Color.parseColor(category.color))
-            } else {
-                PrimaryViolet
-            }
-        } catch (e: Exception) {
-            PrimaryViolet
-        }
-    }
-
-    // Amount-based color: small=mint, medium=amber, large=coral
-    val amountColor = when {
-        transaction.amount >= 5000 -> DebitRed
-        transaction.amount >= 1000 -> AccentAmber
-        else -> AccentCoral
-    }
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Surface),
-        border = BorderStroke(0.5.dp, Divider)
+        border = BorderStroke(1.dp, Divider)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -455,27 +384,24 @@ fun TransactionItemCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                // Emoji avatar circle with category color background
+                // Letter avatar — merchant initial in a circle
                 Box(
                     modifier = Modifier
-                        .size(46.dp)
-                        .background(avatarBgColor, RoundedCornerShape(14.dp))
-                        .border(
-                            BorderStroke(1.dp, avatarAccentColor.copy(alpha = 0.3f)),
-                            RoundedCornerShape(14.dp)
-                        ),
+                        .size(42.dp)
+                        .background(SurfaceElevated, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = getCategoryEmojiForTransaction(category),
-                        fontSize = 20.sp
+                        text = transaction.merchant.take(1).uppercase(),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
                     )
                 }
-                
-                Spacer(modifier = Modifier.width(12.dp))
-                
+
+                Spacer(modifier = Modifier.width(14.dp))
+
                 Column {
-                    // Show merchant name as primary title
                     Text(
                         text = transaction.merchant,
                         fontWeight = FontWeight.SemiBold,
@@ -484,84 +410,60 @@ fun TransactionItemCard(
                         maxLines = 1
                     )
 
-                    // Show user's description/reason if they've edited it from the default
-                    val hasCustomDesc = transaction.description.isNotEmpty() &&
-                        !transaction.description.startsWith("UPI Transfer to")
-                    val hasNotes = transaction.notes.isNotEmpty()
-
-                    if (hasCustomDesc || hasNotes) {
-                        Text(
-                            text = if (hasCustomDesc) transaction.description else transaction.notes,
-                            fontSize = 12.sp,
-                            color = TextSecondary,
-                            maxLines = 1,
-                            modifier = Modifier.padding(top = 2.dp)
-                        )
-                    }
-
+                    // Category + time on the same line
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(top = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Category pill with category color tint
+                        Text(
+                            text = transaction.category,
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+
+                        // Small separator dot
                         Box(
                             modifier = Modifier
-                                .background(
-                                    avatarAccentColor.copy(alpha = 0.12f),
-                                    RoundedCornerShape(20.dp)
-                                )
-                                .border(
-                                    BorderStroke(0.5.dp, avatarAccentColor.copy(alpha = 0.25f)),
-                                    RoundedCornerShape(20.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = transaction.category,
-                                fontSize = 10.sp,
-                                color = avatarAccentColor,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        // Recurring badge
-                        if (transaction.isRecurring) {
-                            Box(
-                                modifier = Modifier
-                                    .background(SuccessGreen.copy(alpha = 0.12f), RoundedCornerShape(20.dp))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "🔁 Recurring",
-                                    fontSize = 9.sp,
-                                    color = SuccessGreen,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
+                                .size(3.dp)
+                                .background(TextMuted, CircleShape)
+                        )
 
                         Text(
                             text = transaction.time,
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = TextMuted
                         )
+
+                        if (transaction.isRecurring) {
+                            Box(
+                                modifier = Modifier
+                                    .size(3.dp)
+                                    .background(TextMuted, CircleShape)
+                            )
+                            Text(
+                                text = "Recurring",
+                                fontSize = 11.sp,
+                                color = Accent,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
             }
-            
+
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = "₹${String.format("%,.2f", transaction.amount)}",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = amountColor
+                    fontSize = 15.sp,
+                    color = TextPrimary
                 )
                 if (transaction.isSplit) {
                     Text(
                         text = "Split active",
                         fontSize = 10.sp,
-                        color = SuccessGreen,
+                        color = Accent,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(top = 4.dp)
                     )
@@ -573,33 +475,22 @@ fun TransactionItemCard(
 
 @Composable
 fun SkeletonCard() {
-    // Rainbow shimmer gradient animation
     val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
-    val shimmerOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
+    val shimmerAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
+            animation = tween(800, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "shimmer"
     )
 
-    val shimmerBrush = Brush.horizontalGradient(
-        colors = listOf(
-            SurfaceElevated,
-            PrimaryViolet.copy(alpha = 0.15f),
-            PrimaryPink.copy(alpha = 0.1f),
-            SurfaceElevated
-        ),
-        startX = shimmerOffset * 800f,
-        endX = shimmerOffset * 800f + 400f
-    )
+    val shimmerColor = SurfaceElevated.copy(alpha = shimmerAlpha)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Surface)
     ) {
         Row(
@@ -610,30 +501,30 @@ fun SkeletonCard() {
         ) {
             Box(
                 modifier = Modifier
-                    .size(46.dp)
-                    .background(shimmerBrush, RoundedCornerShape(14.dp))
+                    .size(42.dp)
+                    .background(shimmerColor, CircleShape)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.6f)
-                        .height(16.dp)
-                        .background(shimmerBrush, RoundedCornerShape(8.dp))
+                        .fillMaxWidth(0.55f)
+                        .height(14.dp)
+                        .background(shimmerColor, RoundedCornerShape(7.dp))
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.3f)
-                        .height(12.dp)
-                        .background(shimmerBrush, RoundedCornerShape(6.dp))
+                        .fillMaxWidth(0.35f)
+                        .height(10.dp)
+                        .background(shimmerColor, RoundedCornerShape(5.dp))
                 )
             }
             Box(
                 modifier = Modifier
-                    .width(60.dp)
-                    .height(20.dp)
-                    .background(shimmerBrush, RoundedCornerShape(8.dp))
+                    .width(56.dp)
+                    .height(14.dp)
+                    .background(shimmerColor, RoundedCornerShape(7.dp))
             )
         }
     }

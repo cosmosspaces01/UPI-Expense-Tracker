@@ -1,9 +1,6 @@
 package com.upi.expensetracker.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -13,8 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -32,8 +27,7 @@ fun EditTransactionSheet(
     onSave: (TransactionEntity) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
-    // Form States
+
     var merchantName by remember { mutableStateOf(transaction.merchant) }
     var description by remember { mutableStateOf(transaction.description) }
     var selectedCategory by remember { mutableStateOf(transaction.category) }
@@ -44,284 +38,79 @@ fun EditTransactionSheet(
     var isSettled by remember { mutableStateOf(transaction.isSettled) }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = sheetState,
-        containerColor = Surface,
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(top = 12.dp, bottom = 8.dp)
-                    .width(40.dp)
-                    .height(4.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink)),
-                        shape = RoundedCornerShape(2.dp)
-                    )
-            )
-        },
+        onDismissRequest = onDismiss, sheetState = sheetState, containerColor = Surface,
+        dragHandle = { Box(Modifier.padding(top = 12.dp, bottom = 8.dp).width(40.dp).height(4.dp).background(SurfaceElevated, RoundedCornerShape(2.dp))) },
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 8.dp)
-                .imePadding(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 8.dp).imePadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = "✏️ Edit Transaction",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimary
-            )
-            
-            Text(
-                text = "Amount: ₹${String.format("%.2f", transaction.amount)} | Ref: ${transaction.refId}",
-                fontSize = 13.sp,
-                color = TextMuted
-            )
+            Text("Edit Transaction", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Text("₹${String.format("%.2f", transaction.amount)}  •  Ref: ${transaction.refId}", fontSize = 13.sp, color = TextMuted)
 
-            // Merchant Name Input (so user can fix "Unknown Payee")
-            OutlinedTextField(
-                value = merchantName,
-                onValueChange = { merchantName = it },
-                label = { Text("Merchant / Payee Name") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceElevated,
-                    unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = PrimaryViolet,
-                    unfocusedBorderColor = PrimaryMuted,
-                    focusedLabelColor = PrimaryViolet,
-                    unfocusedLabelColor = TextSecondary,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary,
-                    cursorColor = PrimaryViolet
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
+            OutlinedTextField(value = merchantName, onValueChange = { merchantName = it },
+                label = { Text("Merchant / Payee Name") }, modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = SurfaceElevated, unfocusedContainerColor = SurfaceElevated, focusedBorderColor = Accent, unfocusedBorderColor = Divider, focusedLabelColor = Accent, unfocusedLabelColor = TextSecondary, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary, cursorColor = Accent),
+                shape = RoundedCornerShape(12.dp))
 
-            // Reason/Description Input
-            OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
-                label = { Text("Reason / Description") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceElevated,
-                    unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = PrimaryViolet,
-                    unfocusedBorderColor = PrimaryMuted,
-                    focusedLabelColor = PrimaryViolet,
-                    unfocusedLabelColor = TextSecondary,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary,
-                    cursorColor = PrimaryViolet
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
+            OutlinedTextField(value = description, onValueChange = { description = it },
+                label = { Text("Description") }, modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = SurfaceElevated, unfocusedContainerColor = SurfaceElevated, focusedBorderColor = Accent, unfocusedBorderColor = Divider, focusedLabelColor = Accent, unfocusedLabelColor = TextSecondary, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary, cursorColor = Accent),
+                shape = RoundedCornerShape(12.dp))
 
-            // Category Horizontal Selector — each chip uses its own color
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Select Category",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(vertical = 4.dp)
-                ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Category", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(categories) { category ->
                         val isSelected = category.name == selectedCategory
-                        val catColor = try {
-                            Color(android.graphics.Color.parseColor(category.color))
-                        } catch (e: Exception) {
-                            PrimaryViolet
-                        }
-                        val chipBg = if (isSelected) catColor.copy(alpha = 0.2f) else Divider
-                        val chipText = if (isSelected) catColor else TextMuted
-                        val chipBorder = if (isSelected) catColor else PrimaryMuted
-                        
-                        Box(
-                            modifier = Modifier
-                                .background(chipBg, RoundedCornerShape(20.dp))
-                                .border(BorderStroke(1.dp, chipBorder), RoundedCornerShape(20.dp))
-                                .clickable { selectedCategory = category.name }
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                // Simple colored dot for category color
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .background(catColor, RoundedCornerShape(4.dp))
-                                )
-                                Text(
-                                    text = category.name,
-                                    color = chipText,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
+                        FilterChip(
+                            selected = isSelected, onClick = { selectedCategory = category.name },
+                            label = { Text(category.name, fontSize = 12.sp) },
+                            colors = FilterChipDefaults.filterChipColors(selectedContainerColor = Accent, containerColor = SurfaceElevated, labelColor = TextMuted, selectedLabelColor = Background),
+                            border = null
+                        )
                     }
                 }
             }
 
-            // Notes Input
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = { Text("Add Notes") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceElevated,
-                    unfocusedContainerColor = SurfaceElevated,
-                    focusedBorderColor = PrimaryViolet,
-                    unfocusedBorderColor = PrimaryMuted,
-                    focusedLabelColor = PrimaryViolet,
-                    unfocusedLabelColor = TextSecondary,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary,
-                    cursorColor = PrimaryViolet
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
+            OutlinedTextField(value = notes, onValueChange = { notes = it },
+                label = { Text("Notes") }, modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = SurfaceElevated, unfocusedContainerColor = SurfaceElevated, focusedBorderColor = Accent, unfocusedBorderColor = Divider, focusedLabelColor = Accent, unfocusedLabelColor = TextSecondary, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary, cursorColor = Accent),
+                shape = RoundedCornerShape(12.dp))
 
-            // Split Toggle
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Split this expense?",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary
-                )
-                Switch(
-                    checked = isSplit,
-                    onCheckedChange = { isSplit = it },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = TextPrimary,
-                        checkedTrackColor = PrimaryViolet,
-                        uncheckedThumbColor = TextMuted,
-                        uncheckedTrackColor = SurfaceElevated
-                    )
-                )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Split this expense?", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimary)
+                Switch(checked = isSplit, onCheckedChange = { isSplit = it }, colors = SwitchDefaults.colors(checkedThumbColor = TextPrimary, checkedTrackColor = Accent, uncheckedThumbColor = TextMuted, uncheckedTrackColor = SurfaceElevated))
             }
 
-            // Split Inputs
             if (isSplit) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    OutlinedTextField(
-                        value = splitWith,
-                        onValueChange = { splitWith = it },
-                        label = { Text("Split With") },
-                        modifier = Modifier.weight(1f),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = SurfaceElevated,
-                            unfocusedContainerColor = SurfaceElevated,
-                            focusedBorderColor = PrimaryViolet,
-                            unfocusedBorderColor = PrimaryMuted,
-                            focusedLabelColor = PrimaryViolet,
-                            unfocusedLabelColor = TextSecondary,
-                            cursorColor = PrimaryViolet
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = splitAmountStr,
-                        onValueChange = { splitAmountStr = it },
-                        label = { Text("Your Share (₹)") },
-                        modifier = Modifier.weight(1f),
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(value = splitWith, onValueChange = { splitWith = it }, label = { Text("Split With") }, modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = SurfaceElevated, unfocusedContainerColor = SurfaceElevated, focusedBorderColor = Accent, unfocusedBorderColor = Divider, focusedLabelColor = Accent, unfocusedLabelColor = TextSecondary, cursorColor = Accent),
+                        shape = RoundedCornerShape(12.dp))
+                    OutlinedTextField(value = splitAmountStr, onValueChange = { splitAmountStr = it }, label = { Text("Your Share (₹)") }, modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = SurfaceElevated,
-                            unfocusedContainerColor = SurfaceElevated,
-                            focusedBorderColor = PrimaryViolet,
-                            unfocusedBorderColor = PrimaryMuted,
-                            focusedLabelColor = PrimaryViolet,
-                            unfocusedLabelColor = TextSecondary,
-                            cursorColor = PrimaryViolet
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = SurfaceElevated, unfocusedContainerColor = SurfaceElevated, focusedBorderColor = Accent, unfocusedBorderColor = Divider, focusedLabelColor = Accent, unfocusedLabelColor = TextSecondary, cursorColor = Accent),
+                        shape = RoundedCornerShape(12.dp))
                 }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Marked as Settled / Paid Back?",
-                        fontSize = 14.sp,
-                        color = TextSecondary
-                    )
-                    Checkbox(
-                        checked = isSettled,
-                        onCheckedChange = { isSettled = it ?: false },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = PrimaryViolet,
-                            uncheckedColor = TextMuted
-                        )
-                    )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Settled / Paid Back?", fontSize = 14.sp, color = TextSecondary)
+                    Checkbox(checked = isSettled, onCheckedChange = { isSettled = it ?: false }, colors = CheckboxDefaults.colors(checkedColor = Accent, uncheckedColor = TextMuted))
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Save Button — Gradient
             Button(
                 onClick = {
-                    val updated = transaction.copy(
-                        merchant = merchantName.trim().ifEmpty { transaction.merchant },
-                        description = description,
-                        category = selectedCategory,
-                        notes = notes,
-                        isSplit = isSplit,
-                        splitWith = if (isSplit) splitWith else "",
-                        splitAmount = if (isSplit) (splitAmountStr.toDoubleOrNull() ?: 0.0) else 0.0,
-                        isSettled = if (isSplit) isSettled else false
-                    )
-                    onSave(updated)
+                    onSave(transaction.copy(merchant = merchantName.trim().ifEmpty { transaction.merchant }, description = description, category = selectedCategory, notes = notes, isSplit = isSplit,
+                        splitWith = if (isSplit) splitWith else "", splitAmount = if (isSplit) (splitAmountStr.toDoubleOrNull() ?: 0.0) else 0.0, isSettled = if (isSplit) isSettled else false))
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                shape = RoundedCornerShape(14.dp),
-                contentPadding = PaddingValues()
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink)),
-                            shape = RoundedCornerShape(14.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Save Changes ✨",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                }
-            }
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                shape = RoundedCornerShape(14.dp)
+            ) { Text("Save Changes", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Background) }
 
             Spacer(modifier = Modifier.height(8.dp))
         }

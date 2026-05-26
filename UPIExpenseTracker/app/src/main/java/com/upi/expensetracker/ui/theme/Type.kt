@@ -9,38 +9,29 @@ import androidx.compose.ui.unit.sp
 import com.upi.expensetracker.R
 
 // ══════════════════════════════════════════════════════════
-// Nunito Font Family — bundled TTF files from Google Fonts
+// Nunito Font Family
 // ══════════════════════════════════════════════════════════
 
 val NunitoFamily = FontFamily(
-    Font(R.font.nunito_light,    FontWeight.Light),     // 300
-    Font(R.font.nunito_regular,  FontWeight.Normal),    // 400
-    Font(R.font.nunito_semibold, FontWeight.SemiBold),  // 600
-    Font(R.font.nunito_bold,     FontWeight.Bold)       // 700
+    Font(R.font.nunito_light,    FontWeight.Light),
+    Font(R.font.nunito_regular,  FontWeight.Normal),
+    Font(R.font.nunito_semibold, FontWeight.SemiBold),
+    Font(R.font.nunito_bold,     FontWeight.Bold)
 )
 
 // ══════════════════════════════════════════════════════════
-// Material 3 Typography — Neon Sunset scale
+// Material 3 Typography — Midnight Slate
 // ══════════════════════════════════════════════════════════
-//
-// Font size reference:
-//   Hero amount      → 36sp  Bold   (bumped for drama)
-//   Screen title     → 22sp  Bold
-//   Card title       → 15sp  SemiBold
-//   Body/description → 13sp  Normal
-//   Caption/timestamp → 11sp Light
 
 val Typography = Typography(
-    // Hero amounts, large numbers — bigger for dramatic impact
     headlineLarge = TextStyle(
         fontFamily = NunitoFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 44.sp,
+        fontSize = 32.sp,
+        lineHeight = 40.sp,
         letterSpacing = 0.sp,
         color = TextPrimary
     ),
-    // Screen titles
     headlineMedium = TextStyle(
         fontFamily = NunitoFamily,
         fontWeight = FontWeight.Bold,
@@ -49,7 +40,6 @@ val Typography = Typography(
         letterSpacing = 0.sp,
         color = TextPrimary
     ),
-    // Section headers, card titles
     titleLarge = TextStyle(
         fontFamily = NunitoFamily,
         fontWeight = FontWeight.Bold,
@@ -66,7 +56,6 @@ val Typography = Typography(
         letterSpacing = 0.15.sp,
         color = TextPrimary
     ),
-    // Body text
     bodyLarge = TextStyle(
         fontFamily = NunitoFamily,
         fontWeight = FontWeight.Normal,
@@ -91,7 +80,6 @@ val Typography = Typography(
         letterSpacing = 0.4.sp,
         color = TextSecondary
     ),
-    // Captions, timestamps, hints
     labelSmall = TextStyle(
         fontFamily = NunitoFamily,
         fontWeight = FontWeight.Light,

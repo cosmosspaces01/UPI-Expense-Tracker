@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +24,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +49,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize Database & ViewModel
         val database = AppDatabase.getDatabase(applicationContext, lifecycleScope)
         val viewModelFactory = MainViewModelFactory(
             database.transactionDao(),
@@ -73,7 +72,6 @@ fun MainAppLayout(viewModel: MainViewModel) {
     val navController = rememberNavController()
     val allCategories by viewModel.allCategories.collectAsState()
 
-    // SMS permission states
     var hasSmsPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
@@ -84,195 +82,106 @@ fun MainAppLayout(viewModel: MainViewModel) {
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         hasSmsPermission = isGranted
-        if (isGranted) {
-            Toast.makeText(context, "SMS Permission Granted!", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, "SMS Permission Denied. You will need to manually grant permission or use mock data.", Toast.LENGTH_LONG).show()
-        }
+        if (isGranted) Toast.makeText(context, "SMS Permission Granted", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(context, "SMS Permission Denied. You can use mock data instead.", Toast.LENGTH_LONG).show()
     }
 
-    // Trigger permission request on start if not already granted
     LaunchedEffect(Unit) {
-        if (!hasSmsPermission) {
-            permissionLauncher.launch(Manifest.permission.READ_SMS)
-        }
+        if (!hasSmsPermission) permissionLauncher.launch(Manifest.permission.READ_SMS)
     }
 
-    // Active transaction editing bottom sheet state
     var transactionEditing by remember { mutableStateOf<TransactionEntity?>(null) }
-
-    // Add new transaction bottom sheet state
     var showAddTransaction by remember { mutableStateOf(false) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // FAB bounce animation
+    // FAB scale animation
     val fabScale by animateFloatAsState(
         targetValue = if (currentRoute in listOf("home", "transactions")) 1f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        ),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow),
         label = "fabScale"
     )
 
     Scaffold(
         floatingActionButton = {
-            // Show FAB on Home and Transactions screens with bounce animation
             if (currentRoute in listOf("home", "transactions")) {
                 FloatingActionButton(
                     onClick = { showAddTransaction = true },
-                    containerColor = Color.Transparent,
-                    contentColor = Color.White,
+                    containerColor = Accent,
+                    contentColor = Background,
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .scale(fabScale)
-                        .size(56.dp)
+                    modifier = Modifier.scale(fabScale)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(PrimaryViolet, PrimaryPink)
-                                ),
-                                shape = RoundedCornerShape(16.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Add Transaction",
-                            tint = Color.White
-                        )
-                    }
+                    Icon(Icons.Default.Add, "Add Transaction")
                 }
             }
         },
         bottomBar = {
-            // Hide bottom navigation if we are inside detailed screen views (budgets, categories, insights)
             val showBottomBar = currentRoute in listOf("home", "transactions", "analytics", "settings")
             if (showBottomBar) {
                 Column {
-                    // Top border line
-                    HorizontalDivider(
-                        thickness = 0.5.dp,
-                        color = Divider
-                    )
+                    HorizontalDivider(thickness = 1.dp, color = Divider)
                     NavigationBar(
                         containerColor = Background,
                         tonalElevation = 0.dp,
                         modifier = Modifier.height(64.dp)
                     ) {
-                    // Home
-                    NavigationBarItem(
-                        selected = currentRoute == "home",
-                        onClick = {
-                            navController.navigate("home") {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                        label = { Text("Home", fontSize = 11.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PrimaryViolet,
-                            selectedTextColor = PrimaryViolet,
-                            unselectedIconColor = TextMuted,
-                            unselectedTextColor = TextMuted,
-                            indicatorColor = PrimaryViolet.copy(alpha = 0.15f)
+                        NavigationBarItem(
+                            selected = currentRoute == "home",
+                            onClick = { navController.navigate("home") { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                            icon = { Icon(Icons.Default.Home, "Home") },
+                            label = { Text("Home", fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Accent, selectedTextColor = Accent,
+                                unselectedIconColor = TextMuted, unselectedTextColor = TextMuted,
+                                indicatorColor = Accent.copy(alpha = 0.1f)
+                            )
                         )
-                    )
-                    
-                    // Transactions
-                    NavigationBarItem(
-                        selected = currentRoute == "transactions",
-                        onClick = {
-                            navController.navigate("transactions") {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Default.List, contentDescription = "Transactions") },
-                        label = { Text("Transactions", fontSize = 11.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PrimaryPink,
-                            selectedTextColor = PrimaryPink,
-                            unselectedIconColor = TextMuted,
-                            unselectedTextColor = TextMuted,
-                            indicatorColor = PrimaryPink.copy(alpha = 0.15f)
+                        NavigationBarItem(
+                            selected = currentRoute == "transactions",
+                            onClick = { navController.navigate("transactions") { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                            icon = { Icon(Icons.Default.List, "Transactions") },
+                            label = { Text("Transactions", fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Accent, selectedTextColor = Accent,
+                                unselectedIconColor = TextMuted, unselectedTextColor = TextMuted,
+                                indicatorColor = Accent.copy(alpha = 0.1f)
+                            )
                         )
-                    )
-
-                    // Analytics / Monthly Summary
-                    NavigationBarItem(
-                        selected = currentRoute == "analytics",
-                        onClick = {
-                            navController.navigate("analytics") {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Menu, contentDescription = "Analytics") },
-                        label = { Text("Analytics", fontSize = 11.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AccentAmber,
-                            selectedTextColor = AccentAmber,
-                            unselectedIconColor = TextMuted,
-                            unselectedTextColor = TextMuted,
-                            indicatorColor = AccentAmber.copy(alpha = 0.15f)
+                        NavigationBarItem(
+                            selected = currentRoute == "analytics",
+                            onClick = { navController.navigate("analytics") { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                            icon = { Icon(Icons.Default.Menu, "Analytics") },
+                            label = { Text("Analytics", fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Accent, selectedTextColor = Accent,
+                                unselectedIconColor = TextMuted, unselectedTextColor = TextMuted,
+                                indicatorColor = Accent.copy(alpha = 0.1f)
+                            )
                         )
-                    )
-
-                    // Settings
-                    NavigationBarItem(
-                        selected = currentRoute == "settings",
-                        onClick = {
-                            navController.navigate("settings") {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                        label = { Text("Settings", fontSize = 11.sp) },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = AccentMint,
-                            selectedTextColor = AccentMint,
-                            unselectedIconColor = TextMuted,
-                            unselectedTextColor = TextMuted,
-                            indicatorColor = AccentMint.copy(alpha = 0.15f)
+                        NavigationBarItem(
+                            selected = currentRoute == "settings",
+                            onClick = { navController.navigate("settings") { popUpTo(navController.graph.findStartDestination().id) { saveState = true }; launchSingleTop = true; restoreState = true } },
+                            icon = { Icon(Icons.Default.Settings, "Settings") },
+                            label = { Text("Settings", fontSize = 11.sp) },
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Accent, selectedTextColor = Accent,
+                                unselectedIconColor = TextMuted, unselectedTextColor = TextMuted,
+                                indicatorColor = Accent.copy(alpha = 0.1f)
+                            )
                         )
-                    )
                     }
                 }
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = "home",
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable("home") {
-                HomeScreen(
-                    viewModel = viewModel,
-                    onEditTransaction = { transactionEditing = it }
-                )
-            }
-            composable("transactions") {
-                TransactionsScreen(
-                    viewModel = viewModel,
-                    onEditTransaction = { transactionEditing = it }
-                )
-            }
+        NavHost(navController, startDestination = "home", modifier = Modifier.padding(innerPadding)) {
+            composable("home") { HomeScreen(viewModel, onEditTransaction = { transactionEditing = it }) }
+            composable("transactions") { TransactionsScreen(viewModel, onEditTransaction = { transactionEditing = it }) }
             composable("analytics") {
-                // Gradient-styled sub-navigation chip row
                 Column(modifier = Modifier.fillMaxSize()) {
+                    // Sub-navigation chips — clean outlined, uniform accent
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -280,85 +189,44 @@ fun MainAppLayout(viewModel: MainViewModel) {
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Insights chip
                         OutlinedButton(
                             onClick = { navController.navigate("insights") },
                             shape = RoundedCornerShape(20.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                brush = Brush.horizontalGradient(listOf(PrimaryViolet, PrimaryPink))
-                            ),
+                            border = BorderStroke(1.dp, AccentDim),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Text("💡 Insights", color = PrimaryViolet, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-                        // Budgets chip
+                        ) { Text("Insights", color = Accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
                         OutlinedButton(
                             onClick = { navController.navigate("budgets") },
                             shape = RoundedCornerShape(20.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                brush = Brush.horizontalGradient(listOf(AccentAmber, AccentCoral))
-                            ),
+                            border = BorderStroke(1.dp, AccentDim),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Text("🎯 Budgets", color = AccentAmber, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-                        // Categories chip
+                        ) { Text("Budgets", color = Accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
                         OutlinedButton(
                             onClick = { navController.navigate("categories") },
                             shape = RoundedCornerShape(20.dp),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                brush = Brush.horizontalGradient(listOf(AccentMint, AccentSky))
-                            ),
+                            border = BorderStroke(1.dp, AccentDim),
                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                        ) {
-                            Text("🏷️ Categories", color = AccentMint, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
+                        ) { Text("Categories", color = Accent, fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
                     }
                     AnalyticsScreen(viewModel = viewModel)
                 }
             }
-            composable("settings") {
-                SettingsScreen(viewModel = viewModel)
-            }
-            composable("budgets") {
-                BudgetsScreen(
-                    viewModel = viewModel,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("categories") {
-                CategoriesScreen(
-                    viewModel = viewModel,
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("insights") {
-                InsightsScreen(
-                    viewModel = viewModel,
-                    onBack = { navController.popBackStack() }
-                )
-            }
+            composable("settings") { SettingsScreen(viewModel) }
+            composable("budgets") { BudgetsScreen(viewModel, onBack = { navController.popBackStack() }) }
+            composable("categories") { CategoriesScreen(viewModel, onBack = { navController.popBackStack() }) }
+            composable("insights") { InsightsScreen(viewModel, onBack = { navController.popBackStack() }) }
         }
     }
 
-    // Modal Edit Sheet Dialog
     if (transactionEditing != null) {
         EditTransactionSheet(
             transaction = transactionEditing!!,
             categories = allCategories,
             onDismiss = { transactionEditing = null },
-            onSave = { updatedTxn ->
-                viewModel.updateTransaction(updatedTxn)
-                transactionEditing = null
-                Toast.makeText(context, "Transaction saved!", Toast.LENGTH_SHORT).show()
-            }
+            onSave = { viewModel.updateTransaction(it); transactionEditing = null; Toast.makeText(context, "Transaction saved", Toast.LENGTH_SHORT).show() }
         )
     }
 
-    // Modal Add Transaction Sheet
     if (showAddTransaction) {
         val todayDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
         AddTransactionSheet(
@@ -368,7 +236,7 @@ fun MainAppLayout(viewModel: MainViewModel) {
             onAdd = { amount, merchant, category, date, time, description, notes ->
                 viewModel.addTransaction(amount, merchant, category, date, time, description, notes)
                 showAddTransaction = false
-                Toast.makeText(context, "✅ Transaction added!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Transaction added", Toast.LENGTH_SHORT).show()
             }
         )
     }
