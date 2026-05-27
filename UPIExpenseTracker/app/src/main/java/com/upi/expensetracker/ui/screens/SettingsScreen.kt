@@ -35,7 +35,7 @@ fun SettingsScreen(
     val allTransactions by viewModel.allTransactions.collectAsState()
 
     var userNameInput by remember { mutableStateOf(viewModel.userName) }
-    var isLockEnabled by remember { mutableStateOf(viewModel.isAppLockEnabled) }
+
     var showClearDialog by remember { mutableStateOf(false) }
 
     Column(
@@ -72,32 +72,6 @@ fun SettingsScreen(
             }
         }
 
-        // Security
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Surface),
-            border = BorderStroke(1.dp, Divider)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text("App Lock", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text("Require PIN/Biometrics on startup", fontSize = 12.sp, color = TextSecondary)
-                }
-                Switch(
-                    checked = isLockEnabled,
-                    onCheckedChange = {
-                        isLockEnabled = it; viewModel.isAppLockEnabled = it
-                        Toast.makeText(context, if (it) "App lock enabled" else "App lock disabled", Toast.LENGTH_SHORT).show()
-                    },
-                    colors = SwitchDefaults.colors(checkedThumbColor = TextPrimary, checkedTrackColor = Accent)
-                )
-            }
-        }
 
         // Export
         Card(

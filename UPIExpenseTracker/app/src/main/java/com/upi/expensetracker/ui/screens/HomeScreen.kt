@@ -416,6 +416,16 @@ fun TransactionItemCard(
                         modifier = Modifier.padding(top = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
+                        // Category color dot
+                        val catColor = try {
+                            category?.color?.let { Color(android.graphics.Color.parseColor(it)) } ?: Accent
+                        } catch (_: Exception) { Accent }
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(catColor, CircleShape)
+                        )
+
                         Text(
                             text = transaction.category,
                             fontSize = 12.sp,

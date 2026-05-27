@@ -3,7 +3,6 @@ package com.upi.expensetracker.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
@@ -32,28 +31,7 @@ import com.upi.expensetracker.data.CategoryEntity
 import com.upi.expensetracker.ui.MainViewModel
 import com.upi.expensetracker.ui.theme.*
 
-// Kept internally for data mapping — not displayed in UI
-fun getCategoryEmoji(iconName: String): String {
-    return when (iconName.lowercase()) {
-        "restaurant", "food", "dining" -> "🍔"
-        "directions_car", "transport", "travel" -> "🚗"
-        "shopping_bag", "shopping" -> "🛒"
-        "movie", "entertainment", "play" -> "🎬"
-        "favorite", "health", "medical" -> "🩺"
-        "bolt", "utilities", "bills" -> "⚡"
-        "subscriptions", "recurring" -> "📅"
-        "home", "rent" -> "🏠"
-        "trending_up", "investments", "savings" -> "📈"
-        "more_horiz", "others", "category" -> "📦"
-        "pizza" -> "🍕"
-        "flight" -> "✈️"
-        "laptop" -> "💻"
-        "checkroom" -> "👕"
-        "book" -> "📚"
-        "card_giftcard" -> "🎁"
-        else -> if (iconName.isNotEmpty() && iconName.codePointAt(0) > 127) iconName else "🏷️"
-    }
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -71,12 +49,12 @@ fun CategoriesScreen(
 
     var newCategoryName by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf("#00BFA6") }
-    var selectedIcon by remember { mutableStateOf("restaurant") }
+
     var newCategoryBudget by remember { mutableStateOf("") }
 
     var editCategoryName by remember { mutableStateOf("") }
     var editCategoryColor by remember { mutableStateOf("#00BFA6") }
-    var editCategoryIcon by remember { mutableStateOf("restaurant") }
+
     var editCategoryBudget by remember { mutableStateOf("") }
 
     val presetColors = listOf(
@@ -84,12 +62,7 @@ fun CategoriesScreen(
         "#AB47BC", "#42A5F5", "#FF7043", "#26A69A", "#78909C"
     )
 
-    val presetIcons = listOf(
-        "restaurant", "directions_car", "shopping_bag", "movie",
-        "favorite", "bolt", "subscriptions", "home",
-        "trending_up", "more_horiz", "pizza", "flight",
-        "laptop", "checkroom", "book", "card_giftcard"
-    )
+
 
     Column(modifier = modifier.fillMaxSize().background(Background)) {
         TopAppBar(
@@ -139,7 +112,7 @@ fun CategoriesScreen(
                             onClick = {
                                 selectedCategoryForEdit = category
                                 editCategoryName = category.name
-                                editCategoryIcon = category.icon
+
                                 editCategoryColor = category.color
                                 editCategoryBudget = category.budget?.toInt()?.toString() ?: ""
                             },
@@ -190,23 +163,6 @@ fun CategoriesScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Accent, unfocusedBorderColor = Divider, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary), shape = RoundedCornerShape(12.dp))
 
-                    Text("Icon:", color = TextSecondary, fontSize = 13.sp)
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        presetIcons.chunked(4).forEach { chunk ->
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-                                chunk.forEach { iconId ->
-                                    val isSelected = selectedIcon == iconId
-                                    Box(
-                                        modifier = Modifier.size(40.dp)
-                                            .background(if (isSelected) Accent.copy(alpha = 0.15f) else Color.Transparent, RoundedCornerShape(10.dp))
-                                            .border(if (isSelected) 2.dp else 1.dp, if (isSelected) Accent else Divider, RoundedCornerShape(10.dp))
-                                            .clickable { selectedIcon = iconId },
-                                        contentAlignment = Alignment.Center
-                                    ) { Text(getCategoryEmoji(iconId), fontSize = 18.sp) }
-                                }
-                            }
-                        }
-                    }
 
                     Text("Color:", color = TextSecondary, fontSize = 13.sp)
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -229,8 +185,8 @@ fun CategoriesScreen(
             confirmButton = {
                 TextButton(onClick = {
                     if (newCategoryName.trim().isNotEmpty()) {
-                        viewModel.insertCategory(newCategoryName.trim(), selectedColor, selectedIcon, newCategoryBudget.toDoubleOrNull())
-                        newCategoryName = ""; selectedColor = "#00BFA6"; selectedIcon = "restaurant"; newCategoryBudget = ""
+                        viewModel.insertCategory(newCategoryName.trim(), selectedColor, "restaurant", newCategoryBudget.toDoubleOrNull())
+                        newCategoryName = ""; selectedColor = "#00BFA6"; newCategoryBudget = ""
                         showCreateDialog = false
                         Toast.makeText(context, "Category created", Toast.LENGTH_SHORT).show()
                     }
@@ -255,23 +211,6 @@ fun CategoriesScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = Accent, unfocusedBorderColor = Divider, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary), shape = RoundedCornerShape(12.dp))
 
-                    Text("Icon:", color = TextSecondary, fontSize = 13.sp)
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        presetIcons.chunked(4).forEach { chunk ->
-                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
-                                chunk.forEach { iconId ->
-                                    val isSelected = editCategoryIcon == iconId
-                                    Box(
-                                        modifier = Modifier.size(40.dp)
-                                            .background(if (isSelected) Accent.copy(alpha = 0.15f) else Color.Transparent, RoundedCornerShape(10.dp))
-                                            .border(if (isSelected) 2.dp else 1.dp, if (isSelected) Accent else Divider, RoundedCornerShape(10.dp))
-                                            .clickable { editCategoryIcon = iconId },
-                                        contentAlignment = Alignment.Center
-                                    ) { Text(getCategoryEmoji(iconId), fontSize = 18.sp) }
-                                }
-                            }
-                        }
-                    }
 
                     Text("Color:", color = TextSecondary, fontSize = 13.sp)
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -302,7 +241,7 @@ fun CategoriesScreen(
             confirmButton = {
                 TextButton(onClick = {
                     if (editCategoryName.trim().isNotEmpty()) {
-                        viewModel.updateCategory(cat.copy(name = editCategoryName.trim(), icon = editCategoryIcon, color = editCategoryColor, budget = editCategoryBudget.toDoubleOrNull()))
+                        viewModel.updateCategory(cat.copy(name = editCategoryName.trim(), color = editCategoryColor, budget = editCategoryBudget.toDoubleOrNull()))
                         selectedCategoryForEdit = null
                         Toast.makeText(context, "Category updated", Toast.LENGTH_SHORT).show()
                     }

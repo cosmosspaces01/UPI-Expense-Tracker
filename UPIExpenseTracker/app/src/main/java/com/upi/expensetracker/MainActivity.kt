@@ -223,7 +223,8 @@ fun MainAppLayout(viewModel: MainViewModel) {
             transaction = transactionEditing!!,
             categories = allCategories,
             onDismiss = { transactionEditing = null },
-            onSave = { viewModel.updateTransaction(it); transactionEditing = null; Toast.makeText(context, "Transaction saved", Toast.LENGTH_SHORT).show() }
+            onSave = { viewModel.updateTransaction(it); transactionEditing = null; Toast.makeText(context, "Transaction saved", Toast.LENGTH_SHORT).show() },
+            onDelete = { viewModel.deleteTransaction(it); transactionEditing = null; Toast.makeText(context, "Transaction deleted", Toast.LENGTH_SHORT).show() }
         )
     }
 

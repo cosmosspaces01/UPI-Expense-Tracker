@@ -1,5 +1,7 @@
 package com.upi.expensetracker.ui.components
 
+import android.widget.Toast
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -10,6 +12,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -24,9 +28,12 @@ fun EditTransactionSheet(
     transaction: TransactionEntity,
     categories: List<CategoryEntity>,
     onDismiss: () -> Unit,
-    onSave: (TransactionEntity) -> Unit
+    onSave: (TransactionEntity) -> Unit,
+    onDelete: (TransactionEntity) -> Unit
 ) {
+    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     var merchantName by remember { mutableStateOf(transaction.merchant) }
     var description by remember { mutableStateOf(transaction.description) }
@@ -112,7 +119,37 @@ fun EditTransactionSheet(
                 shape = RoundedCornerShape(14.dp)
             ) { Text("Save Changes", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Background) }
 
+            // Delete transaction button
+            OutlinedButton(
+                onClick = { showDeleteConfirmation = true },
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(14.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, DebitRed.copy(alpha = 0.5f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = DebitRed)
+            ) { Text("Delete Transaction", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = DebitRed) }
+
             Spacer(modifier = Modifier.height(8.dp))
         }
+    }
+
+    // Delete confirmation dialog
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text("Delete Transaction", color = TextPrimary) },
+            text = { Text("Are you sure you want to delete this ₹${String.format("%.2f", transaction.amount)} transaction to ${transaction.merchant}? This cannot be undone.", color = TextSecondary) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirmation = false
+                    onDelete(transaction)
+                }) { Text("DELETE", color = DebitRed, fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) { Text("CANCEL", color = TextPrimary) }
+            },
+            containerColor = Surface,
+            titleContentColor = TextPrimary,
+            textContentColor = TextSecondary
+        )
     }
 }

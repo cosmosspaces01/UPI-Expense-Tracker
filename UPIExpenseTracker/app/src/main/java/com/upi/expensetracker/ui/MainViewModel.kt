@@ -132,6 +132,12 @@ class MainViewModel(
         }
     }
 
+    fun deleteTransaction(txn: TransactionEntity) {
+        viewModelScope.launch {
+            transactionDao.deleteTransaction(txn)
+        }
+    }
+
     // Manually add a transaction (when user didn't receive SMS)
     fun addTransaction(
         amount: Double,
