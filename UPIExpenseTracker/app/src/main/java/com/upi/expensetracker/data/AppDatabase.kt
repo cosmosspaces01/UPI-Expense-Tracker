@@ -4,13 +4,14 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-@Database(entities = [TransactionEntity::class, CategoryEntity::class], version = 1, exportSchema = false)
+@Database(entities = [TransactionEntity::class, CategoryEntity::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun transactionDao(): TransactionDao
@@ -27,10 +28,22 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "upi_expense_tracker_db"
                 )
+                .addMigrations(MIGRATION_1_2)
                 .addCallback(AppDatabaseCallback(scope))
                 .build()
                 INSTANCE = instance
                 instance
+            }
+        }
+
+        /**
+         * Migration 1→2: Adds the `source` column to track where a transaction
+         * originated ("SMS", "NOTIFICATION", or "MANUAL"). Defaults to "SMS" for
+         * all existing transactions so no data is lost.
+         */
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transactions ADD COLUMN source TEXT NOT NULL DEFAULT 'SMS'")
             }
         }
     }

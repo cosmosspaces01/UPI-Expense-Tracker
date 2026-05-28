@@ -10,8 +10,8 @@ data class TransactionEntity(
     val merchant: String,
     val accountLast4: String,
     val refId: String,
-    val date: String, // YYYY-MM-DD
-    val time: String, // HH:MM
+    val date: String,     // YYYY-MM-DD
+    val time: String,     // HH:MM
     val category: String, // Reference name of the category (e.g. "Food")
     val description: String,
     val notes: String,
@@ -20,5 +20,7 @@ data class TransactionEntity(
     val splitAmount: Double,
     val isSettled: Boolean,
     val rawSMS: String,
-    val isRecurring: Boolean
+    val isRecurring: Boolean,
+    // Source of this transaction: "SMS", "NOTIFICATION", or "MANUAL"
+    val source: String = "SMS"
 )

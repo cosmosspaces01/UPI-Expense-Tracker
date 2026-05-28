@@ -23,6 +23,21 @@
             </intent-filter>
         </activity>
 
+        <!--
+            NotificationListenerService that captures UPI payment notifications from
+            Google Pay, PhonePe, Paytm, etc. and auto-syncs them to the local database.
+            The user must grant "Notification Access" in system settings to activate this.
+        -->
+        <service
+            android:name=".service.UpiNotificationListenerService"
+            android:exported="true"
+            android:label="UPI Expense Tracker Notification Sync"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.upi.expensetracker.fileprovider"

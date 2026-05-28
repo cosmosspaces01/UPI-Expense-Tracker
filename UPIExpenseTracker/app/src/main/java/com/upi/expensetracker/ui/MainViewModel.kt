@@ -1,6 +1,8 @@
 package com.upi.expensetracker.ui
 
+import android.content.ComponentName
 import android.content.Context
+import android.provider.Settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -8,6 +10,7 @@ import com.upi.expensetracker.data.CategoryDao
 import com.upi.expensetracker.data.CategoryEntity
 import com.upi.expensetracker.data.TransactionDao
 import com.upi.expensetracker.data.TransactionEntity
+import com.upi.expensetracker.service.UpiNotificationListenerService
 import com.upi.expensetracker.utils.SmsParser
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -93,6 +96,40 @@ class MainViewModel(
         get() = prefs.getBoolean("app_lock", false)
         set(value) = prefs.edit().putBoolean("app_lock", value).apply()
 
+    /**
+     * Whether the user has opted in to real-time notification-based transaction sync.
+     * Note: this toggle alone is not enough — the OS-level notification listener
+     * access must also be granted via Settings → Apps → Special app access → Notification access.
+     */
+    var isNotificationSyncEnabled: Boolean
+        get() = prefs.getBoolean(UpiNotificationListenerService.PREF_NOTIFICATION_SYNC, false)
+        set(value) = prefs.edit().putBoolean(UpiNotificationListenerService.PREF_NOTIFICATION_SYNC, value).apply()
+
+    /**
+     * Returns true if the user has granted READ_SMS permission.
+     * Used to show the permission guide in Settings.
+     */
+    fun isSmsPermissionGranted(): Boolean {
+        return android.content.pm.PackageManager.PERMISSION_GRANTED ==
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.READ_SMS
+            )
+    }
+
+    /**
+     * Returns true if this app is currently registered as an active notification listener.
+     * Checks the secure settings string that Android maintains for all enabled listeners.
+     */
+    fun isNotificationListenerGranted(): Boolean {
+        val enabledListeners = Settings.Secure.getString(
+            context.contentResolver,
+            "enabled_notification_listeners"
+        ) ?: return false
+        val componentName = ComponentName(context, UpiNotificationListenerService::class.java).flattenToString()
+        return enabledListeners.split(":")
+            .any { it.trim() == componentName }
+    }
+
     // SMS Sync Execution
     fun syncTransactions(onSyncComplete: (Int) -> Unit) {
         viewModelScope.launch {
@@ -138,7 +175,7 @@ class MainViewModel(
         }
     }
 
-    // Manually add a transaction (when user didn't receive SMS)
+    // Manually add a transaction (when user didn't receive SMS or notification)
     fun addTransaction(
         amount: Double,
         merchant: String,
@@ -165,7 +202,8 @@ class MainViewModel(
                 splitAmount = 0.0,
                 isSettled = false,
                 rawSMS = "",
-                isRecurring = false
+                isRecurring = false,
+                source = "MANUAL"
             )
             transactionDao.insertTransactions(listOf(txn))
         }
@@ -215,19 +253,19 @@ class MainViewModel(
             val mocks = listOf(
                 TransactionEntity(
                     UUID.randomUUID().toString(), 349.00, "Swiggy Food", "4321", "REF100234120", dateStr, timeStr,
-                    "Food & Dining", "UPI Transfer to Swiggy", "Dinner order", false, "", 0.0, false, "Paid Rs.349 to Swiggy via UPI ref 100234120 from a/c 4321", false
+                    "Food & Dining", "UPI Transfer to Swiggy", "Dinner order", false, "", 0.0, false, "Paid Rs.349 to Swiggy via UPI ref 100234120 from a/c 4321", false, "MANUAL"
                 ),
                 TransactionEntity(
                     UUID.randomUUID().toString(), 120.00, "Uber ride", "9876", "REF200984112", dateStr, timeStr,
-                    "Transport", "UPI Transfer to Uber", "Office travel", false, "", 0.0, false, "Rs. 120 debited to Uber on a/c ending 9876. Ref 200984112", false
+                    "Transport", "UPI Transfer to Uber", "Office travel", false, "", 0.0, false, "Rs. 120 debited to Uber on a/c ending 9876. Ref 200984112", false, "MANUAL"
                 ),
                 TransactionEntity(
                     UUID.randomUUID().toString(), 199.00, "Spotify Premium", "1234", "REF300129031", dateStr, timeStr,
-                    "Subscriptions", "UPI Subscription payment", "Monthly music plan", false, "", 0.0, false, "Sent Rs. 199 to Spotify Premium. Ref: 300129031 A/c 1234", true
+                    "Subscriptions", "UPI Subscription payment", "Monthly music plan", false, "", 0.0, false, "Sent Rs. 199 to Spotify Premium. Ref: 300129031 A/c 1234", true, "MANUAL"
                 ),
                 TransactionEntity(
                     UUID.randomUUID().toString(), 2500.00, "DMart Store", "4321", "REF400495819", dateStr, timeStr,
-                    "Shopping", "UPI Transfer to DMart", "Monthly groceries", true, "Siddharth", 1250.0, false, "Spent Rs.2500.00 at DMart. A/c ending 4321 ref 400495819", false
+                    "Shopping", "UPI Transfer to DMart", "Monthly groceries", true, "Siddharth", 1250.0, false, "Spent Rs.2500.00 at DMart. A/c ending 4321 ref 400495819", false, "MANUAL"
                 )
             )
             transactionDao.insertTransactions(mocks)
