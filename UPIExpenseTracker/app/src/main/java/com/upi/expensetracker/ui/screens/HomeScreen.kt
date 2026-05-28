@@ -458,6 +458,24 @@ fun TransactionItemCard(
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
+
+                        // Source badge — shows where this transaction was captured from
+                        val (sourceLabel, sourceColor) = when (transaction.source) {
+                            "NOTIFICATION" -> Pair("Notif", Color(0xFF6C63FF))
+                            "MANUAL"       -> Pair("Manual", Color(0xFF636E72))
+                            else           -> Pair("SMS", Color(0xFF0984E3))   // default = "SMS"
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(3.dp)
+                                .background(TextMuted, CircleShape)
+                        )
+                        Text(
+                            text = sourceLabel,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = sourceColor
+                        )
                     }
                 }
             }

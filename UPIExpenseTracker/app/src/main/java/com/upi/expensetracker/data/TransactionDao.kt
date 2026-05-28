@@ -41,6 +41,34 @@ interface TransactionDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: TransactionEntity)
 
+    /**
+     * Counts existing transactions that match a given amount on a specific date
+     * within a [timeStart, timeEnd] HH:mm range.
+     *
+     * Used by the notification listener to detect duplicates when the notification
+     * arrives alongside a bank SMS for the same payment. If count > 0, the
+     * notification-sourced transaction is skipped.
+     *
+     * @param amount    Exact amount to match (Double equality is safe here since
+     *                  both SMS and notification parse the same printed number).
+     * @param date      YYYY-MM-DD date string.
+     * @param timeStart HH:mm lower bound of the window (inclusive).
+     * @param timeEnd   HH:mm upper bound of the window (inclusive).
+     */
+    @Query("""
+        SELECT COUNT(*) FROM transactions 
+        WHERE amount = :amount 
+        AND date = :date 
+        AND time >= :timeStart 
+        AND time <= :timeEnd
+    """)
+    suspend fun countDuplicates(
+        amount: Double,
+        date: String,
+        timeStart: String,
+        timeEnd: String
+    ): Int
+
     @Update
     suspend fun updateTransaction(transaction: TransactionEntity)
 
