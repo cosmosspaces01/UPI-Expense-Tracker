@@ -1,8 +1,8 @@
 package com.upi.expensetracker.ui
 
-import android.content.ComponentName
 import android.content.Context
 import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -118,16 +118,28 @@ class MainViewModel(
 
     /**
      * Returns true if this app is currently registered as an active notification listener.
-     * Checks the secure settings string that Android maintains for all enabled listeners.
+     *
+     * Uses two complementary checks:
+     * 1. [NotificationManagerCompat.getEnabledListenerPackages] — the official API, checks by package name.
+     * 2. Fallback Settings.Secure string check using [contains] instead of exact equality, because
+     *    Android can store either the full component name OR a shortened ".ClassName" form, so
+     *    strict equality was silently returning false even when access was granted.
      */
     fun isNotificationListenerGranted(): Boolean {
+        // Primary check: official NotificationManager API (package-level)
+        val enabledPackages = NotificationManagerCompat.getEnabledListenerPackages(context)
+        if (enabledPackages.contains(context.packageName)) return true
+
+        // Fallback: parse the raw Settings.Secure string to catch edge cases where
+        // the package-level check may lag (e.g., immediately after the user grants access).
         val enabledListeners = Settings.Secure.getString(
             context.contentResolver,
             "enabled_notification_listeners"
         ) ?: return false
-        val componentName = ComponentName(context, UpiNotificationListenerService::class.java).flattenToString()
+        val packageName = context.packageName
+        // Each entry is "package/ClassName"; split entries by ":" then check if our package appears.
         return enabledListeners.split(":")
-            .any { it.trim() == componentName }
+            .any { it.trim().startsWith(packageName) }
     }
 
     // SMS Sync Execution
