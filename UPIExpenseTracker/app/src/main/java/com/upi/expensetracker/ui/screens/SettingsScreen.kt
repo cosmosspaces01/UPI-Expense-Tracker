@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.upi.expensetracker.BuildConfig
 import com.upi.expensetracker.ui.MainViewModel
 import com.upi.expensetracker.ui.theme.*
 import com.upi.expensetracker.utils.Exporter
@@ -44,6 +45,7 @@ fun SettingsScreen(
     var hasSmsPermission by remember { mutableStateOf(viewModel.isSmsPermissionGranted()) }
     var hasNotificationAccess by remember { mutableStateOf(viewModel.isNotificationListenerGranted()) }
     var isNotificationSyncEnabled by remember { mutableStateOf(viewModel.isNotificationSyncEnabled) }
+    var isAppLockEnabled by remember { mutableStateOf(viewModel.isAppLockEnabled) }
 
     Column(
         modifier = modifier
@@ -75,6 +77,81 @@ fun SettingsScreen(
                         focusedLabelColor = Accent, focusedTextColor = TextPrimary, unfocusedTextColor = TextPrimary
                     ),
                     shape = RoundedCornerShape(12.dp)
+                )
+            }
+        }
+
+        // ── App Lock ───────────────────────────────────────────────────────
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = Surface),
+            border = BorderStroke(
+                width = 1.dp,
+                color = if (isAppLockEnabled) Accent.copy(alpha = 0.4f) else Divider
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(
+                                if (isAppLockEnabled) Accent.copy(alpha = 0.12f)
+                                else Divider.copy(alpha = 0.3f),
+                                androidx.compose.foundation.shape.CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isAppLockEnabled) Icons.Default.Lock else Icons.Default.LockOpen,
+                            contentDescription = "App Lock",
+                            tint = if (isAppLockEnabled) Accent else TextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            "App Lock",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = TextPrimary
+                        )
+                        Text(
+                            if (isAppLockEnabled) "Fingerprint / PIN required on open"
+                            else "Tap to protect your financial data",
+                            fontSize = 11.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+                Switch(
+                    checked = isAppLockEnabled,
+                    onCheckedChange = { enabled ->
+                        isAppLockEnabled = enabled
+                        viewModel.isAppLockEnabled = enabled
+                        val msg = if (enabled)
+                            "App Lock enabled — biometric required on next open"
+                        else
+                            "App Lock disabled"
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = Background,
+                        checkedTrackColor = Accent,
+                        uncheckedThumbColor = TextMuted,
+                        uncheckedTrackColor = SurfaceElevated
+                    )
                 )
             }
         }
@@ -158,28 +235,32 @@ fun SettingsScreen(
             }
         }
 
+
         // ── Developer Tools ───────────────────────────────────────────────────
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Surface),
-            border = BorderStroke(1.dp, Divider)
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Developer Tools", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                Text("Inject mock transactions for testing analytics, splits, and budgets without actual SMS alerts.", fontSize = 12.sp, color = TextSecondary)
-                OutlinedButton(
-                    onClick = {
-                        viewModel.injectMockSMS()
-                        Toast.makeText(context, "Mock data injected", Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.fillMaxWidth().height(46.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, AccentDim)
-                ) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Build, "Dev", tint = TextSecondary)
-                        Text("Inject Mock SMS Data", fontWeight = FontWeight.SemiBold, color = TextSecondary)
+        // Only visible in debug builds — never ships in the production APK
+        if (BuildConfig.DEBUG) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Surface),
+                border = BorderStroke(1.dp, Divider)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("Developer Tools", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("Inject mock transactions for testing analytics, splits, and budgets without actual SMS alerts.", fontSize = 12.sp, color = TextSecondary)
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.injectMockSMS()
+                            Toast.makeText(context, "Mock data injected", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(46.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, AccentDim)
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Build, "Dev", tint = TextSecondary)
+                            Text("Inject Mock SMS Data", fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                        }
                     }
                 }
             }

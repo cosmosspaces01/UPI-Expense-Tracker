@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.upi.expensetracker"
-        minSdk = 26
+        minSdk = 29
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -23,7 +23,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -53,6 +54,9 @@ android {
 dependencies {
     val composeBomVersion = "2024.02.01"
     val roomVersion = "2.6.1"
+    val sqlCipherVersion = "4.5.4"
+    val securityCryptoVersion = "1.1.0-alpha06"
+    val biometricVersion = "1.1.0"
 
     implementation(platform("androidx.compose:compose-bom:$composeBomVersion"))
     implementation("androidx.compose.ui:ui")
@@ -68,6 +72,16 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
+
+    // SQLCipher — encrypted Room database
+    implementation("net.zetetic:android-database-sqlcipher:$sqlCipherVersion")
+    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
+
+    // Encrypted SharedPreferences — stores database key securely
+    implementation("androidx.security:security-crypto:$securityCryptoVersion")
+
+    // Biometric authentication — app lock
+    implementation("androidx.biometric:biometric:$biometricVersion")
 
     // Core utilities
     implementation("androidx.core:core-ktx:1.12.0")

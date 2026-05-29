@@ -1,13 +1,15 @@
 package com.upi.expensetracker
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
+import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
+import androidx.biometric.BiometricPrompt
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -44,8 +46,13 @@ import com.upi.expensetracker.ui.components.AddTransactionSheet
 import com.upi.expensetracker.ui.components.EditTransactionSheet
 import com.upi.expensetracker.ui.screens.*
 import com.upi.expensetracker.ui.theme.*
+import java.util.concurrent.Executor
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var executor: Executor
+    private lateinit var biometricPrompt: BiometricPrompt
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -56,10 +63,147 @@ class MainActivity : ComponentActivity() {
             applicationContext
         )
 
+        executor = ContextCompat.getMainExecutor(this)
+
         setContent {
             UPIExpenseTrackerTheme {
                 val viewModel: MainViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = viewModelFactory)
-                MainAppLayout(viewModel)
+
+                // Track whether biometric authentication has been satisfied this session
+                var isAuthenticated by remember { mutableStateOf(!viewModel.isAppLockEnabled) }
+
+                if (isAuthenticated) {
+                    MainAppLayout(viewModel)
+                } else {
+                    // Show the lock screen and launch biometric prompt
+                    LockScreen(
+                        onAuthenticate = {
+                            showBiometricPrompt(
+                                onSuccess = { isAuthenticated = true },
+                                onFailed = {
+                                    Toast.makeText(
+                                        this,
+                                        "Authentication failed. Try again.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            )
+                        }
+                    )
+                    // Auto-trigger the prompt on first composition
+                    LaunchedEffect(Unit) {
+                        showBiometricPrompt(
+                            onSuccess = { isAuthenticated = true },
+                            onFailed = {}
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Displays the system BiometricPrompt.
+     *
+     * Supports both strong biometrics (fingerprint, face) and device credential
+     * (PIN, pattern, password) as a fallback — so the app lock always works even
+     * on devices without a fingerprint sensor.
+     *
+     * @param onSuccess Called on successful authentication.
+     * @param onFailed  Called when the user fails or cancels authentication.
+     */
+    private fun showBiometricPrompt(
+        onSuccess: () -> Unit,
+        onFailed: () -> Unit
+    ) {
+        // Check if any authenticator is available before showing the prompt
+        val biometricManager = BiometricManager.from(this)
+        val canAuthenticate = biometricManager.canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+
+        if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
+            // No authentication method available — grant access transparently
+            onSuccess()
+            return
+        }
+
+        biometricPrompt = BiometricPrompt(
+            this,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    onSuccess()
+                }
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    // Individual attempt failed (wrong finger) — callback handles UX
+                    onFailed()
+                }
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    // User cancelled or no more retries — stay on lock screen
+                    onFailed()
+                }
+            }
+        )
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("UPI Expense Tracker")
+            .setSubtitle("Authenticate to access your financial data")
+            .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
+    }
+}
+
+/**
+ * A minimal lock screen shown when the app is locked and awaiting authentication.
+ * The user taps "Unlock" to re-trigger the system BiometricPrompt.
+ */
+@Composable
+fun LockScreen(onAuthenticate: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Background),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            modifier = Modifier.padding(40.dp)
+        ) {
+            Text(
+                text = "🔒",
+                fontSize = 56.sp
+            )
+            Text(
+                text = "UPI Expense Tracker",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
+            Text(
+                text = "Your financial data is protected.\nAuthenticate to continue.",
+                fontSize = 14.sp,
+                color = TextSecondary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            Button(
+                onClick = onAuthenticate,
+                colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+            ) {
+                Text(
+                    "Unlock",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Background
+                )
             }
         }
     }
@@ -74,7 +218,7 @@ fun MainAppLayout(viewModel: MainViewModel) {
 
     var hasSmsPermission by remember {
         mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_SMS) == android.content.pm.PackageManager.PERMISSION_GRANTED
         )
     }
 
@@ -87,7 +231,7 @@ fun MainAppLayout(viewModel: MainViewModel) {
     }
 
     LaunchedEffect(Unit) {
-        if (!hasSmsPermission) permissionLauncher.launch(Manifest.permission.READ_SMS)
+        if (!hasSmsPermission) permissionLauncher.launch(android.Manifest.permission.READ_SMS)
     }
 
     var transactionEditing by remember { mutableStateOf<TransactionEntity?>(null) }

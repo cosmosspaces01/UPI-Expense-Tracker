@@ -1,6 +1,5 @@
 package com.upi.expensetracker.utils
 
-import android.util.Log
 import com.upi.expensetracker.data.TransactionEntity
 
 /**
@@ -66,7 +65,7 @@ object NotificationParser {
             .joinToString(" ")
 
         if (combinedText.isBlank()) {
-            Log.d(TAG, "[$appName] Empty notification body — skipping")
+            SecureLogger.d(TAG, "[$appName] Empty notification body — skipping")
             return null
         }
 
@@ -75,16 +74,19 @@ object NotificationParser {
         val lowerCombined = combinedText.lowercase()
         val hasPaymentKeyword = PAYMENT_KEYWORDS.any { lowerCombined.contains(it) }
         if (!hasPaymentKeyword) {
-            Log.d(TAG, "[$appName] No payment keyword found in: ${combinedText.take(80)}")
+            SecureLogger.d(TAG, "[$appName] No payment keyword found — skipping")
             return null
         }
 
-        Log.d(TAG, "[$appName] Processing notification: ${combinedText.take(120)}")
+        SecureLogger.d(TAG, "[$appName] Processing notification")
 
         // Delegate to the existing SMS parser which handles all amount/merchant/date extraction.
         val parsed = SmsParser.parseSMS(combinedText, timestampMs) ?: return null
 
-        // Override the source field to mark this transaction as captured from a notification.
-        return parsed.copy(source = "NOTIFICATION", rawSMS = combinedText)
+        // Override source and apply rawSMS redaction before storing
+        return parsed.copy(
+            source = "NOTIFICATION",
+            rawSMS = SmsParser.redactSmsBody(combinedText)
+        )
     }
 }

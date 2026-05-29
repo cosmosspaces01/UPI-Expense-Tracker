@@ -2,7 +2,6 @@ package com.upi.expensetracker.utils
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import com.upi.expensetracker.data.TransactionEntity
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -110,13 +109,13 @@ object SmsParser {
 
         // If it only has credit keywords and no debit keywords, skip it
         if (hasCredit && !hasDebit) {
-            Log.d(TAG, "Skipping credit SMS: ${body.take(80)}")
+            SecureLogger.d(TAG, "Skipping credit SMS: ${body.take(80)}")
             return null
         }
 
         // Step 2: Check debit keywords
         if (!hasDebit) {
-            Log.d(TAG, "No debit keyword found in: ${body.take(80)}")
+            SecureLogger.d(TAG, "No debit keyword found in: ${body.take(80)}")
             return null
         }
 
@@ -136,14 +135,14 @@ object SmsParser {
                 val amountStr = match.groupValues[1].replace(",", "")
                 amount = amountStr.toDoubleOrNull()
                 if (amount != null && amount > 0) {
-                    Log.d(TAG, "Amount found: ₹$amount")
+                    SecureLogger.d(TAG, "Amount found: ₹$amount")
                     break
                 }
             }
         }
 
         if (amount == null || amount <= 0) {
-            Log.d(TAG, "No valid amount found in: ${body.take(80)}")
+            SecureLogger.d(TAG, "No valid amount found in: ${body.take(80)}")
             return null
         }
 
@@ -181,7 +180,7 @@ object SmsParser {
                     merchant = candidate.split(" ").joinToString(" ") { word ->
                         word.replaceFirstChar { char -> char.uppercase() }
                     }
-                    Log.d(TAG, "Merchant found: $merchant")
+                    SecureLogger.d(TAG, "Merchant found: $merchant")
                     break
                 }
             }
@@ -193,7 +192,7 @@ object SmsParser {
             for (known in knownMerchants) {
                 if (bodyLower.contains(known)) {
                     merchant = known.replaceFirstChar { it.uppercase() }
-                    Log.d(TAG, "Merchant matched from known list: $merchant")
+                    SecureLogger.d(TAG, "Merchant matched from known list: $merchant")
                     break
                 }
             }
@@ -331,7 +330,7 @@ object SmsParser {
             "jio", "airtel", "broadband", "insurance"
         ).any { sub -> merchantLower.contains(sub) || bodyLower.contains(sub) }
 
-        Log.d(TAG, "✅ Parsed: ₹$amount | $merchant | $category | $formattedDate $formattedTime | Ref: $refId")
+        SecureLogger.d(TAG, "✅ Parsed: ₹$amount | $merchant | $category | $formattedDate $formattedTime | Ref: $refId")
 
         return TransactionEntity(
             id = id,
@@ -348,7 +347,7 @@ object SmsParser {
             splitWith = "",
             splitAmount = 0.0,
             isSettled = false,
-            rawSMS = body,
+            rawSMS = redactSmsBody(body),   // Store redacted version only
             isRecurring = isRecurring
         )
     }
@@ -356,6 +355,42 @@ object SmsParser {
     private fun generateHash(input: String): String {
         val bytes = MessageDigest.getInstance("SHA-256").digest(input.toByteArray())
         return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    /**
+     * Redacts sensitive identifiers from an SMS body before persisting in the database.
+     *
+     * Masked patterns (Option B — structure preserved, values hidden):
+     * - Account numbers:   "A/C **5024" → "A/C **XXXX"
+     *                      "account 123456789" → "account XXXXXXXXX"
+     * - UPI VPA:          "user@okicici" → "[UPI-ID-REDACTED]"
+     * - Full card/account digit runs: sequences of 9–16 digits → "[REDACTED]"
+     *
+     * This keeps the structural context of the SMS (bank name, keyword pattern)
+     * for potential future analysis without exposing actual account identifiers.
+     */
+    fun redactSmsBody(body: String): String {
+        var redacted = body
+
+        // Mask last-4 patterns: **5024, XX5024, *5024
+        redacted = redacted.replace(
+            Regex("""(\*{1,2}|xx)\d{4}""", RegexOption.IGNORE_CASE),
+            "**XXXX"
+        )
+
+        // Mask UPI VPA addresses: anything@provider
+        redacted = redacted.replace(
+            Regex("""[a-zA-Z0-9.\-_+]+@[a-zA-Z0-9.\-_]+"""),
+            "[UPI-ID-REDACTED]"
+        )
+
+        // Mask standalone account number sequences (9–16 digits)
+        redacted = redacted.replace(
+            Regex("""(?<!\d)\d{9,16}(?!\d)"""),
+            "[REDACTED]"
+        )
+
+        return redacted
     }
 
     fun syncTodayTransactions(context: Context): List<TransactionEntity> {
@@ -385,7 +420,7 @@ object SmsParser {
         calendar.set(Calendar.MILLISECOND, 999)
         val endTimeMs = calendar.timeInMillis
 
-        Log.d(TAG, "Syncing SMS from ${Date(startTimeMs)} to ${Date(endTimeMs)}")
+        SecureLogger.d(TAG, "Syncing SMS from ${Date(startTimeMs)} to ${Date(endTimeMs)}")
 
         val cursor = contentResolver.query(
             Uri.parse("content://sms/inbox"),
@@ -418,8 +453,8 @@ object SmsParser {
                 val hasDebitKeyword = DEBIT_KEYWORDS.any { keyword -> bodyLower.contains(keyword) }
 
                 if (isBankSMS || hasDebitKeyword) {
-                    Log.d(TAG, "Processing SMS from: $address | Bank: $isBankSMS | Debit: $hasDebitKeyword")
-                    Log.d(TAG, "SMS body: ${body.take(120)}")
+                    SecureLogger.d(TAG, "Processing SMS from: $address | Bank: $isBankSMS | Debit: $hasDebitKeyword")
+                    // Note: SMS body is NOT logged even in debug to protect financial data
 
                     val txn = parseSMS(body, smsDateMs)
                     if (txn != null) {
@@ -430,7 +465,7 @@ object SmsParser {
             }
         }
 
-        Log.d(TAG, "Sync complete: $totalSmsRead SMS read, $totalParsed transactions parsed")
+        SecureLogger.d(TAG, "Sync complete: $totalSmsRead SMS read, $totalParsed transactions parsed")
         return transactions
     }
 }

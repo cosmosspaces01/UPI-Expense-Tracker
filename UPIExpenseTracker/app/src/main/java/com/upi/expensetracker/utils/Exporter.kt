@@ -16,31 +16,53 @@ import java.util.Locale
 
 object Exporter {
 
+    /**
+     * Sanitizes a CSV text field to prevent formula injection attacks.
+     *
+     * If the value starts with a spreadsheet formula character (=, +, -, @, tab, CR),
+     * it is prefixed with a single quote to neutralize it in Excel/Sheets while
+     * preserving the original content. Double quotes are also escaped per RFC 4180.
+     *
+     * @param value Raw string field from a transaction entity.
+     * @return Sanitized string safe to embed in a CSV cell.
+     */
+    private fun sanitizeCSVField(value: String): String {
+        val escaped = value.replace("\"", "\"\"")
+        // Prefix formula-injection characters to prevent spreadsheet execution
+        return if (escaped.isNotEmpty() && escaped[0] in listOf('=', '+', '-', '@', '\t', '\r')) {
+            "'$escaped"
+        } else {
+            escaped
+        }
+    }
+
     fun generateCSVString(transactions: List<TransactionEntity>): String {
         val builder = java.lang.StringBuilder()
         builder.append("ID,Date,Time,Amount,Merchant,Category,Description,Notes,Split,SplitWith,SplitAmount,Settled,ReferenceID,BankLast4,Recurring\n")
-        
+
         for (t in transactions) {
-            val splitFlag = if (t.isSplit) "YES" else "NO"
-            val settledFlag = if (t.isSettled) "YES" else "NO"
+            val splitFlag     = if (t.isSplit) "YES" else "NO"
+            val settledFlag   = if (t.isSettled) "YES" else "NO"
             val recurringFlag = if (t.isRecurring) "YES" else "NO"
-            
-            // Escape double quotes in text fields
-            val merchantEsc = t.merchant.replace("\"", "\"\"")
-            val descEsc = t.description.replace("\"", "\"\"")
-            val notesEsc = t.notes.replace("\"", "\"\"")
-            val splitWithEsc = t.splitWith.replace("\"", "\"\"")
-            
+
+            // Sanitize text fields against CSV formula injection
+            val merchantEsc  = sanitizeCSVField(t.merchant)
+            val descEsc      = sanitizeCSVField(t.description)
+            val notesEsc     = sanitizeCSVField(t.notes)
+            val splitWithEsc = sanitizeCSVField(t.splitWith)
+
             builder.append("${t.id},${t.date},${t.time},${t.amount},\"$merchantEsc\",${t.category},\"$descEsc\",\"$notesEsc\",$splitFlag,\"$splitWithEsc\",${t.splitAmount},$settledFlag,${t.refId},${t.accountLast4},$recurringFlag\n")
         }
-        
+
         return builder.toString()
     }
 
     fun shareCSV(context: Context, transactions: List<TransactionEntity>) {
         try {
             val csvContent = generateCSVString(transactions)
-            val cacheFile = File(context.cacheDir, "upi_expense_report.csv")
+            // Write to a restricted exports/ subdirectory (matches FileProvider scope)
+            val exportDir = File(context.cacheDir, "exports").also { it.mkdirs() }
+            val cacheFile = File(exportDir, "upi_expense_report.csv")
             val writer = FileWriter(cacheFile)
             writer.write(csvContent)
             writer.close()
@@ -129,7 +151,9 @@ object Exporter {
 
             pdfDocument.finishPage(page)
 
-            val cacheFile = File(context.cacheDir, "upi_expense_report.pdf")
+            // Write to a restricted exports/ subdirectory (matches FileProvider scope)
+            val exportDir = File(context.cacheDir, "exports").also { it.mkdirs() }
+            val cacheFile = File(exportDir, "upi_expense_report.pdf")
             val outputStream = FileOutputStream(cacheFile)
             pdfDocument.writeTo(outputStream)
             pdfDocument.close()

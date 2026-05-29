@@ -4,9 +4,9 @@ import android.app.Notification
 import android.content.Context
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.util.Log
 import com.upi.expensetracker.data.AppDatabase
 import com.upi.expensetracker.utils.NotificationParser
+import com.upi.expensetracker.utils.SecureLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -67,7 +67,7 @@ class UpiNotificationListenerService : NotificationListenerService() {
         // 2. Respect the user's toggle — if sync is disabled in settings, skip
         val prefs = getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
         if (!prefs.getBoolean(PREF_NOTIFICATION_SYNC, false)) {
-            Log.d(TAG, "Notification sync disabled by user — skipping")
+            SecureLogger.d(TAG, "Notification sync disabled by user — skipping")
             return
         }
 
@@ -78,7 +78,8 @@ class UpiNotificationListenerService : NotificationListenerService() {
             ?: extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
 
         val appName = NotificationParser.KNOWN_UPI_PACKAGES[packageName]
-        Log.d(TAG, "[$appName] title=$title | text=$text")
+        // Note: notification title/text not logged to avoid financial data leakage in Logcat
+        SecureLogger.d(TAG, "[$appName] notification received, processing...")
 
         // 4. Parse and attempt to insert on IO thread
         serviceScope.launch {
@@ -105,16 +106,16 @@ class UpiNotificationListenerService : NotificationListenerService() {
                 if (duplicateCount > 0) {
                     // A transaction for the same amount already exists nearby in time —
                     // most likely captured via a bank SMS. Skip to avoid duplicates.
-                    Log.d(TAG, "⏭ Duplicate detected (₹${transaction.amount} within ±${DEDUP_WINDOW_MINUTES}min) — skipping notification insert")
+                    SecureLogger.d(TAG, "⏭ Duplicate detected within ±${DEDUP_WINDOW_MINUTES}min — skipping")
                     return@launch
                 }
 
                 // 6. No duplicate found — safe to insert
                 dao.insertTransactions(listOf(transaction))
-                Log.d(TAG, "✅ Saved from [$appName]: ₹${transaction.amount} @ ${transaction.merchant} [${transaction.date} ${transaction.time}]")
+                SecureLogger.d(TAG, "✅ Saved from [$appName]: ₹${transaction.amount} @ ${transaction.merchant}")
 
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to process notification transaction", e)
+                SecureLogger.e(TAG, "Failed to process notification transaction", e)
             }
         }
     }
@@ -139,19 +140,19 @@ class UpiNotificationListenerService : NotificationListenerService() {
 
             Pair(TIME_FORMAT.format(startCal.time), TIME_FORMAT.format(endCal.time))
         } catch (e: Exception) {
-            Log.w(TAG, "Could not parse time '$centerTime' for dedup window — using full-day range")
+            SecureLogger.w(TAG, "Could not parse time '$centerTime' for dedup window — using full-day range")
             Pair("00:00", "23:59")
         }
     }
 
     override fun onListenerConnected() {
         super.onListenerConnected()
-        Log.d(TAG, "Notification listener connected — watching UPI apps")
+        SecureLogger.d(TAG, "Notification listener connected — watching UPI apps")
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
-        Log.d(TAG, "Notification listener disconnected")
+        SecureLogger.d(TAG, "Notification listener disconnected")
     }
 
     override fun onDestroy() {

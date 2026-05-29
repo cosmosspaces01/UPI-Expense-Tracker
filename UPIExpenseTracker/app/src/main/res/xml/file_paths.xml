@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <cache-path name="cached_files" path="." />
+    <!-- Only exposes the exports/ subdirectory — not the entire cache root -->
+    <cache-path name="export_reports" path="exports/" />
 </paths>
