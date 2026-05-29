@@ -114,7 +114,7 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (isAppLockEnabled) Icons.Default.Lock else Icons.Default.LockOpen,
+                            imageVector = Icons.Default.Lock,
                             contentDescription = "App Lock",
                             tint = if (isAppLockEnabled) Accent else TextMuted,
                             modifier = Modifier.size(20.dp)

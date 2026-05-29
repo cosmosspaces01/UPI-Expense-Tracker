@@ -2,7 +2,7 @@ package com.upi.expensetracker
 
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -48,7 +48,7 @@ import com.upi.expensetracker.ui.screens.*
 import com.upi.expensetracker.ui.theme.*
 import java.util.concurrent.Executor
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private lateinit var executor: Executor
     private lateinit var biometricPrompt: BiometricPrompt

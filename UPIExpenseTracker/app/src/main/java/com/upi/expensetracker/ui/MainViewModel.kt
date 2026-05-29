@@ -89,7 +89,7 @@ class MainViewModel(
     private val prefs = context.getSharedPreferences("upi_tracker_prefs", Context.MODE_PRIVATE)
 
     var userName: String
-        get() = prefs.getString("user_name", "Arjun") ?: "Arjun"
+        get() = prefs.getString("user_name", "Kukkiii") ?: "Kukkiii"
         set(value) = prefs.edit().putString("user_name", value).apply()
 
     var isAppLockEnabled: Boolean
